@@ -6,7 +6,6 @@ import hashlib
 import os
 import re
 import sys
-import tarfile
 import zipfile
 from configparser import ConfigParser
 from multiprocessing import Process, Queue
@@ -38,7 +37,7 @@ def read_config():
     try:
         config.read(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.ini'))
     except IOError:
-        print('ERROR - Config settings not found. Usage: $python this-script.py config-file.ini')
+        print('ERROR - config.ini not found')
         sys.exit()
 
     # Get info from config.ini into global variables
@@ -57,7 +56,7 @@ def read_config():
     language_config["comment_inline_pattern"] = comment_inline + '.*?$'
     language_config["comment_open_tag"] = re.escape(config.get('Language', 'comment_open_tag'))
     language_config["comment_close_tag"] = re.escape(config.get('Language', 'comment_close_tag'))
-    language_config["comment_open_close_pattern"] = comment_open_tag + '.*?' + comment_close_tag
+    language_config["comment_open_close_pattern"] = language_config["comment_open_tag"] + '.*?' + language_config["comment_close_tag"]
     language_config["file_extensions"] = config.get('Language', 'File_extensions').split(' ')
     # Reading config settings
     init_file_id = config.getint('Config', 'init_file_id')
@@ -71,11 +70,15 @@ def count_lines(string, count_empty = True):
     return result
 
 
+def md5_hash(string):
+    m = hashlib.md5()
+    m.update(string.encode("utf-8"))
+    return m.hexdigest()
+
+
 def tokenize_files(file_string):
     h_time = dt.datetime.now()
-    m = hashlib.md5()
-    m.update(file_string.encode("utf-8"))
-    file_hash = m.hexdigest()
+    file_hash = md5_hash(file_string)
     hash_time = (dt.datetime.now() - h_time).microseconds
     lines = count_lines(file_string)
     file_string = "".join([s for s in file_string.splitlines(True) if s.strip()])
@@ -117,10 +120,9 @@ def tokenize_files(file_string):
     t_time = (dt.datetime.now() - t_time).microseconds
     # MD5
     h_time = dt.datetime.now()
-    m = hashlib.md5()
-    m.update(tokens.encode("utf-8"))
+    tokens_hash = md5_hash(tokens)
     hash_time += (dt.datetime.now() - h_time).microseconds
-    final_tokens = (tokens_count_total, tokens_count_unique, m.hexdigest(), '@#@' + tokens)
+    final_tokens = (tokens_count_total, tokens_count_unique, tokens_hash, '@#@' + tokens)
     return final_stats, final_tokens, [s_time, t_time, hash_time, re_time]
 
 
@@ -140,90 +142,6 @@ def process_file_contents(file_string, proj_id, file_id, container_path, file_pa
     FILE_tokens_file.write(','.join([proj_id, str(file_id), str(tokens_count_total), str(tokens_count_unique), token_hash + tokens]) + '\n')
     w_time += (dt.datetime.now() - ww_time).microseconds
     return file_parsing_times + [w_time]  # [s_time, t_time, w_time, hash_time, re_time]
-
-
-def process_regular_folder(args, folder_path, files):
-    process_num, proj_id, _, proj_url, base_file_id, FILE_tokens_file, _, FILE_stats_file, times = args
-    all_files = files
-    # Filter them by the correct extension
-    aux = []
-    for extension in file_extensions:
-        aux.extend([x for x in all_files if x.endswith(extension)])
-    all_files = aux
-    # This is very strange, but I did find some paths with newlines,
-    # so I am simply eliminates them
-    all_files = [x for x in all_files if '\n' not in x]
-
-    for file_path in all_files:
-        file_id = process_num * MULTIPLIER + base_file_id + file_count
-        print("<%s, %s, %s>" % (file_id, folder_path, file_path))
-        file_path = os.path.join(folder_path, file_path)
-
-        with open(file_path) as f:
-            f_time = dt.datetime.now()
-            file_string = f.read()
-            f_time = (dt.datetime.now() - f_time).microseconds
-            times_c = process_file_contents(file_string, proj_id, file_id, "", file_path,
-                                            str(os.path.getsize(file_path)), proj_url, FILE_tokens_file,
-                                            FILE_stats_file)
-            times[0] += f_time
-            times[1] += times_c[0]
-            times[2] += times_c[1]
-            times[3] += times_c[4]
-            times[4] += times_c[2]
-            times[5] += times_c[3]
-
-
-def process_tgz_ball(process_num, tar_file, proj_id, proj_path, proj_url, base_file_id, FILE_tokens_file,
-                     FILE_bookkeeping_proj, FILE_stats_file):
-    zip_time = file_time = string_time = tokens_time = hash_time = write_time = regex_time = 0
-    print("[INFO] " + 'Attempting to process_tgz_ball ' + tar_file)
-    try:
-        with tarfile.open(tar_file, 'r|*') as my_tar_file:
-            for f in my_tar_file:
-                if not f.isfile():
-                    continue
-                # Filter by the correct extension
-                if not os.path.splitext(f.name)[1] in file_extensions:
-                    continue
-
-                file_id = process_num * MULTIPLIER + base_file_id + file_count
-                file_bytes = str(f.size)
-                z_time = dt.datetime.now()
-                try:
-                    myfile = my_tar_file.extractfile(f)
-                except Exception as e:
-                    print("[WARNING] " + 
-                        'Unable to open file (1) <' + proj_id + ',' + str(file_id) + ',' + os.path.join(tar_file,
-                                                                                                        f.name) + '> (process ' + str(
-                            process_num) + ')')
-                    break
-                zip_time += (dt.datetime.now() - z_time).microseconds
-
-                if myfile is None:
-                    print("[WARNING] " + 
-                        'Unable to open file (2) <' + proj_id + ',' + str(file_id) + ',' + os.path.join(tar_file,
-                                                                                                        f.name) + '> (process ' + str(
-                            process_num) + ')')
-                    break
-
-                f_time = dt.datetime.now()
-                file_string = myfile.read()
-                file_time += (dt.datetime.now() - f_time).microseconds
-
-                file_path = f.name
-                times = process_file_contents(file_string, proj_id, file_id, tar_file, file_path, file_bytes, proj_url,
-                                              FILE_tokens_file, FILE_stats_file)
-                string_time += times[0]
-                tokens_time += times[1]
-                write_time += times[4]
-                hash_time += times[2]
-                regex_time += times[3]
-    except Exception as e:
-        print("[WARNING] " + 'Unable to open tar on <' + proj_id + ',' + proj_path + '> (process ' + str(process_num) + ')')
-        print("[WARNING] " + e)
-        return
-    return zip_time, file_time, string_time, tokens_time, write_time, hash_time, regex_time
 
 
 def process_zip_ball(process_num, zip_file, proj_id, proj_path, proj_url, base_file_id, FILE_tokens_file, FILE_bookkeeping_proj, FILE_stats_file):
@@ -265,32 +183,17 @@ def process_zip_ball(process_num, zip_file, proj_id, proj_path, proj_url, base_f
     return zip_time, file_time, string_time, tokens_time, write_time, hash_time, regex_time
 
 
-def process_one_project(process_num, proj_id, proj_path, base_file_id, FILE_tokens_file, FILE_bookkeeping_proj, FILE_stats_file, project_format):
+def process_one_project(process_num, proj_id, proj_path, base_file_id, FILE_tokens_file, FILE_bookkeeping_proj, FILE_stats_file):
     p_start = dt.datetime.now()
-    print("[INFO] " + 'Starting ' + project_format + ' project <' + proj_id + ',' + proj_path + '> (process ' + str(process_num) + ')')
+    print("[INFO] " + 'Starting  project <' + proj_id + ',' + proj_path + '> (process ' + str(process_num) + ')')
     if not os.path.isfile(proj_path):
         print("[WARNING] " + 'Unable to open project <' + proj_id + ',' + proj_path + '> (process ' + str(process_num) + ')')
         return
 
-    if project_format == 'leidos':
-        proj_url = 'None'
-        # Search for tar files with _code in them
-        tar_files = [os.path.join(proj_path, f) for f in os.listdir(proj_path) if
-                     os.path.isfile(os.path.join(proj_path, f))]
-        tar_files = [f for f in tar_files if '_code' in f]
-        if len(tar_files) != 1:
-            print("[WARNING] " + 'Tar not found on <' + proj_id + ',' + proj_path + '> (process ' + str(process_num) + ')')
-            times = [0, 0, 0, 0, 0, 0, 0]
-            os.path.walk(proj_path, process_regular_folder, (process_num, proj_id, proj_path, proj_url, base_file_id, FILE_tokens_file, FILE_bookkeeping_proj, FILE_stats_file, times))
-        else:
-            tar_file = tar_files[0]
-            times = process_tgz_ball(process_num, tar_file, proj_id, proj_path, proj_url, base_file_id, FILE_tokens_file, FILE_bookkeeping_proj, FILE_stats_file)
-    elif project_format == 'zip':
-        proj_url = 'NULL'
-        zip_file = proj_path
-        times = process_zip_ball(process_num, zip_file, proj_id, proj_path, proj_url, base_file_id, FILE_tokens_file, FILE_bookkeeping_proj, FILE_stats_file)
-    zip_time, file_time, string_time, tokens_time, write_time, hash_time, regex_time = (
-        times if times is not None else (-1, -1, -1, -1, -1, -1, -1))
+    proj_url = 'NULL'
+    zip_file = proj_path
+    times = process_zip_ball(process_num, zip_file, proj_id, proj_path, proj_url, base_file_id, FILE_tokens_file, FILE_bookkeeping_proj, FILE_stats_file)
+    zip_time, file_time, string_time, tokens_time, write_time, hash_time, regex_time = (times if times is not None else (-1, -1, -1, -1, -1, -1, -1))
 
     FILE_bookkeeping_proj.write(proj_id + ',\"' + proj_path + '\",\"' + proj_url + '\"\n')
     p_elapsed = dt.datetime.now() - p_start
@@ -305,7 +208,7 @@ def process_one_project(process_num, proj_id, proj_path, base_file_id, FILE_toke
     print("[INFO] " + '     regex: {}'.format(regex_time))
 
 
-def process_projects(process_num, list_projects, base_file_id, global_queue, project_format):
+def process_projects(process_num, list_projects, base_file_id, global_queue):
     file_files_stats_file = os.path.join(dirs_config["stats_folder"], 'files-stats-' + str(process_num) + '.stats')
     file_bookkeeping_proj_name = os.path.join(dirs_config["bookkeeping_folder"], 'bookkeeping-proj-{}.projs'.format(process_num))
     file_files_tokens_file = os.path.join(dirs_config["tokens_file"], 'files-tokens-{}.tokens'.format(process_num))
@@ -316,7 +219,7 @@ def process_projects(process_num, list_projects, base_file_id, global_queue, pro
         print("[INFO] " + "Process %s starting", process_num)
         p_start = dt.datetime.now()
         for proj_id, proj_path in list_projects:
-            process_one_project(process_num, str(proj_id), proj_path, base_file_id, FILE_tokens, FILE_bookkeeping, FILE_stats, project_format)
+            process_one_project(process_num, str(proj_id), proj_path, base_file_id, FILE_tokens, FILE_bookkeeping, FILE_stats)
 
     p_elapsed = (dt.datetime.now() - p_start).seconds
     print("[INFO] " + 'Process %s finished. %s files in %ss.', process_num, file_count, p_elapsed)
@@ -326,7 +229,7 @@ def process_projects(process_num, list_projects, base_file_id, global_queue, pro
     sys.exit(0)
 
 
-def start_child(processes, global_queue, proj_paths, batch, project_format):
+def start_child(processes, global_queue, proj_paths, batch):
     # This is a blocking get. If the queue is empty, it waits
     pid, n_files_processed = global_queue.get()
     # OK, one of the processes finished. Let's get its data and kill it
@@ -338,7 +241,7 @@ def start_child(processes, global_queue, proj_paths, batch, project_format):
 
     print("Starting new process %s" % pid)
     p = Process(name='Process ' + str(pid), target=process_projects,
-                args=(pid, paths_batch, processes[pid][1], global_queue, project_format))
+                args=(pid, paths_batch, processes[pid][1], global_queue))
     processes[pid][0] = p
     p.start()
 
@@ -358,14 +261,11 @@ def active_process_count(processes):
 
 
 if __name__ == '__main__':
-    global project_format
-    project_format = sys.argv[1]
-
-    if project_format not in ['zip', 'leidos']:
-        print("ERROR - Please insert archive format, 'zip', 'leidos'!")
+    try:
+        read_config()
+    except Exception as e:
+        print(e)
         sys.exit()
-
-    read_config()
     p_start = dt.datetime.now()
 
     prio_proj_paths = []
@@ -377,22 +277,9 @@ if __name__ == '__main__':
         prio_proj_paths = zip(range(init_proj_id, len(prio_proj_paths) + init_proj_id), prio_proj_paths)
 
     proj_paths = []
-    print('\'', project_format, '\'', 'format')
-    if project_format == 'leidos':
-        with open(dirs_config["projects_list"]) as f:
-            for line in f:
-                prio = False
-                line_split = line.strip('\n')
-                for p in prio_proj_paths:
-                    if p[1][0] == line_split:
-                        prio = True
-                        print("Project %s is in priority list" % line_split)
-                if not prio:
-                    proj_paths.append(line_split)
-    elif project_format == 'zip':
-        with open(FILE_projects_list) as f:
-            for line in f:
-                proj_paths.append(line.strip("\n"))
+    with open(FILE_projects_list) as f:
+        for line in f:
+            proj_paths.append(line.strip("\n"))
     proj_paths = list(zip(range(1, len(proj_paths) + 1), proj_paths))
 
     if os.path.exists(dirs_config["stats_folder"]) or os.path.exists(dirs_config["bookkeeping_folder"]) or os.path.exists(dirs_config["tokens_file"]):
@@ -421,12 +308,12 @@ if __name__ == '__main__':
     # Start the priority projects
     print("*** Starting priority projects...")
     while len(prio_proj_paths) > 0:
-        start_child(processes, global_queue, prio_proj_paths, 1, project_format)
+        start_child(processes, global_queue, prio_proj_paths, 1)
 
     # Start all other projects
     print("*** Starting regular projects...")
     while len(proj_paths) > 0:
-        start_child(processes, global_queue, proj_paths, PROJECTS_BATCH, project_format)
+        start_child(processes, global_queue, proj_paths, PROJECTS_BATCH)
 
     print("*** No more projects to process. Waiting for children to finish...")
     while active_process_count(processes) > 0:
