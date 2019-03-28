@@ -122,7 +122,7 @@ def tokenize_files(file_string):
     h_time = dt.datetime.now()
     tokens_hash = md5_hash(tokens)
     hash_time += (dt.datetime.now() - h_time).microseconds
-    final_tokens = (tokens_count_total, tokens_count_unique, tokens_hash, '@#@' + tokens)
+    final_tokens = (tokens_count_total, tokens_count_unique, tokens_hash, tokens)
     return final_stats, final_tokens, [s_time, t_time, hash_time, re_time]
 
 
@@ -136,17 +136,31 @@ def process_file_contents(file_string, proj_id, file_id, container_path, file_pa
     file_url = proj_url + '/' + file_path[7:].replace(' ', '%20')
     file_path = os.path.join(container_path, file_path)
     ww_time = dt.datetime.now()
-    FILE_stats_file.write(','.join([proj_id, str(file_id), '\"' + file_path + '\"', '\"' + file_url + '\"', '\"' + file_hash + '\"', file_bytes, str(lines), str(LOC), str(SLOC)]) + '\n')
+    FILE_stats_file.write(f'{proj_id},{file_id},"{file_path}","{file_url}","{file_hash}",{file_bytes},{lines},{LOC},{SLOC}\n')
     w_time = (dt.datetime.now() - ww_time).microseconds
     ww_time = dt.datetime.now()
-    FILE_tokens_file.write(','.join([proj_id, str(file_id), str(tokens_count_total), str(tokens_count_unique), token_hash + tokens]) + '\n')
+    FILE_tokens_file.write(f"{proj_id},{file_id},{tokens_count_total},{tokens_count_unique}, {token_hash}@#@{tokens}\n")
     w_time += (dt.datetime.now() - ww_time).microseconds
-    return file_parsing_times + [w_time]  # [s_time, t_time, w_time, hash_time, re_time]
+    return {
+        "string_time": file_parsing_times[0],
+        "tokens_time": file_parsing_times[1],
+        "hash_time": file_parsing_times[2],
+        "regex_time": file_parsing_times[3],
+        "write_time": w_time
+    }
 
 
 def process_zip_ball(process_num, zip_file, proj_id, proj_path, proj_url, base_file_id, FILE_tokens_file, FILE_bookkeeping_proj, FILE_stats_file):
-    zip_time = file_time = string_time = tokens_time = hash_time = write_time = regex_time = 0
-    print("[INFO] " + 'Attempting to process_zip_ball ' + zip_file)
+    times = {
+        "zip_time": 0,
+        "file_time": 0,
+        "string_time": 0,
+        "tokens_time": 0,
+        "write_time": 0,
+        "hash_time": 0,
+        "regex_time": 0
+    }
+    print(f"[INFO] Attempting to process_zip_ball {zip_file}")
     with zipfile.ZipFile(proj_path, 'r') as my_file:
         for file in my_file.infolist():
             if not os.path.splitext(file.filename)[1] in file_extensions:
@@ -158,27 +172,24 @@ def process_zip_ball(process_num, zip_file, proj_id, proj_path, proj_url, base_f
             try:
                 my_zip_file = my_file.open(file.filename, 'r')
             except:
-                print("[WARNING] Unable to open file (1) <" + os.path.join(proj_path, file.filename) + '> (process ' + str(process_num) + ')')
+                print("[WARNING] Unable to open file (1) <" + os.path.join(proj_path, file.filename) + f'> (process {process_num})')
                 break
-            zip_time += (dt.datetime.now() - z_time).microseconds
+            times["zip_time"] += (dt.datetime.now() - z_time).microseconds
 
             if my_zip_file is None:
-                print("[WARNING] Unable to open file (2) <" + os.path.join(proj_path, file.filename) + '> (process ' + str(process_num) + ')')
+                print("[WARNING] Unable to open file (2) <" + os.path.join(proj_path, file.filename) + f'> (process {process_num})')
                 break
 
             f_time = dt.datetime.now()
             file_string = my_zip_file.read().decode("utf-8")
-            file_time += (dt.datetime.now() - f_time).microseconds
+            times["file_time"] += (dt.datetime.now() - f_time).microseconds
 
             file_path = file.filename
-            times = process_file_contents(file_string, proj_id, file_id, zip_file, file_path, file_bytes, proj_url, FILE_tokens_file, FILE_stats_file)
-            string_time += times[0]
-            tokens_time += times[1]
-            write_time += times[4]
-            hash_time += times[2]
-            regex_time += times[3]
+            file_times = process_file_contents(file_string, proj_id, file_id, zip_file, file_path, file_bytes, proj_url, FILE_tokens_file, FILE_stats_file)
+            for time_name, time in file_times:
+                times[time_name] += time
     print("[INFO] Successfully ran process_zip_ball {zip_file}")
-    return zip_time, file_time, string_time, tokens_time, write_time, hash_time, regex_time
+    return times
 
 
 def process_one_project(process_num, proj_id, proj_path, base_file_id, FILE_tokens_file, FILE_bookkeeping_proj, FILE_stats_file):
@@ -191,7 +202,15 @@ def process_one_project(process_num, proj_id, proj_path, base_file_id, FILE_toke
     proj_url = 'NULL'
     zip_file = proj_path
     times = process_zip_ball(process_num, zip_file, proj_id, proj_path, proj_url, base_file_id, FILE_tokens_file, FILE_bookkeeping_proj, FILE_stats_file)
-    zip_time, file_time, string_time, tokens_time, write_time, hash_time, regex_time = (times if times is not None else (-1, -1, -1, -1, -1, -1, -1))
+    zip_time, file_time, string_time, tokens_time, write_time, hash_time, regex_time = (-1, -1, -1, -1, -1, -1, -1)
+    if times is not None:
+        zip_time = times["zip_time"]
+        file_time = times["file_time"]
+        string_time = times["string_time"]
+        tokens_time = times["tokens_time"]
+        write_time = times["write_time"]
+        hash_time = times["hash_time"]
+        regex_time = times["regex_time"]
 
     FILE_bookkeeping_proj.write(proj_id + ',\"' + proj_path + '\",\"' + proj_url + '\"\n')
     p_elapsed = dt.datetime.now() - p_start
@@ -207,9 +226,9 @@ def process_one_project(process_num, proj_id, proj_path, base_file_id, FILE_toke
 
 
 def process_projects(process_num, list_projects, base_file_id, global_queue):
-    file_files_stats_file = os.path.join(dirs_config["stats_folder"], 'files-stats-' + str(process_num) + '.stats')
-    file_bookkeeping_proj_name = os.path.join(dirs_config["bookkeeping_folder"], 'bookkeeping-proj-{}.projs'.format(process_num))
-    file_files_tokens_file = os.path.join(dirs_config["tokens_file"], 'files-tokens-{}.tokens'.format(process_num))
+    file_files_stats_file = os.path.join(dirs_config["stats_folder"], f'files-stats-{process_num}.stats')
+    file_bookkeeping_proj_name = os.path.join(dirs_config["bookkeeping_folder"], f'bookkeeping-proj-{process_num}.projs')
+    file_files_tokens_file = os.path.join(dirs_config["tokens_file"], f'files-tokens-{process_num}.tokens')
 
     global file_count
     file_count = 0
@@ -289,26 +308,19 @@ if __name__ == '__main__':
         os.makedirs(dirs_config["bookkeeping_folder"])
         os.makedirs(dirs_config["tokens_file"])
 
-    # Split list of projects into N_PROCESSES lists
-    # proj_paths_list = [ proj_paths[i::N_PROCESSES] for i in xrange(N_PROCESSES) ]
-
     # Multiprocessing with N_PROCESSES
     # [process, file_count]
     processes = [[None, init_file_id] for i in range(N_PROCESSES)]
-    # Multiprocessing shared variable instance for recording file_id
-    # file_id_global_var = Value('i', 1)
     # The queue for processes to communicate back to the parent (this process)
     # Initialize it with N_PROCESSES number of (process_id, n_files_processed)
     global_queue = Queue()
     for i in range(N_PROCESSES):
         global_queue.put((i, 0))
 
-    # Start the priority projects
     print("*** Starting priority projects...")
     while len(prio_proj_paths) > 0:
         start_child(processes, global_queue, prio_proj_paths, 1)
 
-    # Start all other projects
     print("*** Starting regular projects...")
     while len(proj_paths) > 0:
         start_child(processes, global_queue, proj_paths, PROJECTS_BATCH)
@@ -319,4 +331,4 @@ if __name__ == '__main__':
         kill_child(processes, pid, n_files_processed)
 
     p_elapsed = dt.datetime.now() - p_start
-    print("*** All done. %s files in %s" % (file_count, p_elapsed))
+    print(f"*** All done. {file_count} files in {p_elapsed}")
