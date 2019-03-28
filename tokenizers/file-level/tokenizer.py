@@ -83,7 +83,7 @@ def tokenize_files(file_string):
     lines = count_lines(file_string)
     file_string = "".join([s for s in file_string.splitlines(True) if s.strip()])
 
-    lines_of_code = count_lines(file_string)
+    loc = count_lines(file_string)
 
     re_time = dt.datetime.now()
     # Remove tagged comments
@@ -93,10 +93,10 @@ def tokenize_files(file_string):
     re_time = (dt.datetime.now() - re_time).microseconds
 
     file_string = "".join([s for s in file_string.splitlines(True) if s.strip()]).strip()
-    source_lines_of_code = file_string.count('\n')
+    sloc = file_string.count('\n')
     if file_string != '' and not file_string.endswith('\n'):
-        source_lines_of_code += 1
-    final_stats = (file_hash, lines, lines_of_code, source_lines_of_code)
+        sloc += 1
+    final_stats = (file_hash, lines, loc, sloc)
     # Rather a copy of the file string here for tokenization
     file_string_for_tokenization = file_string
     # Transform separators into spaces (remove them)
@@ -158,13 +158,12 @@ def process_zip_ball(process_num, zip_file, proj_id, proj_path, proj_url, base_f
             try:
                 my_zip_file = my_file.open(file.filename, 'r')
             except:
-                print("[WARNING] " + 
-                    'Unable to open file (1) <' + os.path.join(proj_path, file.filename) + '> (process ' + str(process_num) + ')')
+                print("[WARNING] Unable to open file (1) <" + os.path.join(proj_path, file.filename) + '> (process ' + str(process_num) + ')')
                 break
             zip_time += (dt.datetime.now() - z_time).microseconds
 
             if my_zip_file is None:
-                print("[WARNING] " + 'Unable to open file (2) <' + os.path.join(proj_path, file.filename) + '> (process ' + str(process_num) + ')')
+                print("[WARNING] Unable to open file (2) <" + os.path.join(proj_path, file.filename) + '> (process ' + str(process_num) + ')')
                 break
 
             f_time = dt.datetime.now()
@@ -172,22 +171,21 @@ def process_zip_ball(process_num, zip_file, proj_id, proj_path, proj_url, base_f
             file_time += (dt.datetime.now() - f_time).microseconds
 
             file_path = file.filename
-            times = process_file_contents(file_string, proj_id, file_id, zip_file, file_path, file_bytes, proj_url,
-                                          FILE_tokens_file, FILE_stats_file)
+            times = process_file_contents(file_string, proj_id, file_id, zip_file, file_path, file_bytes, proj_url, FILE_tokens_file, FILE_stats_file)
             string_time += times[0]
             tokens_time += times[1]
             write_time += times[4]
             hash_time += times[2]
             regex_time += times[3]
-    print("[INFO] " + 'Successfully ran process_zip_ball ' + zip_file)
+    print("[INFO] Successfully ran process_zip_ball {zip_file}")
     return zip_time, file_time, string_time, tokens_time, write_time, hash_time, regex_time
 
 
 def process_one_project(process_num, proj_id, proj_path, base_file_id, FILE_tokens_file, FILE_bookkeeping_proj, FILE_stats_file):
     p_start = dt.datetime.now()
-    print("[INFO] " + 'Starting  project <' + proj_id + ',' + proj_path + '> (process ' + str(process_num) + ')')
+    print(f"[INFO] Starting  project <{proj_id},{proj_path}> (process {process_num})")
     if not os.path.isfile(proj_path):
-        print("[WARNING] " + 'Unable to open project <' + proj_id + ',' + proj_path + '> (process ' + str(process_num) + ')')
+        print(f"[WARNING] Unable to open project <{proj_id},{proj_path}> (process {process_num})")
         return
 
     proj_url = 'NULL'
@@ -197,15 +195,15 @@ def process_one_project(process_num, proj_id, proj_path, base_file_id, FILE_toke
 
     FILE_bookkeeping_proj.write(proj_id + ',\"' + proj_path + '\",\"' + proj_url + '\"\n')
     p_elapsed = dt.datetime.now() - p_start
-    print("[INFO] " + 'Project finished <{},{}> (process {}))'.format(proj_id, proj_path, process_num))
-    print("[INFO] " + ' ({}): Total: {} ms'.format(process_num, p_elapsed))
-    print("[INFO] " + '     Zip: {}'.format(zip_time))
-    print("[INFO] " + '     Read: {}'.format(file_time))
-    print("[INFO] " + '     Separators: {} ms'.format(string_time))
-    print("[INFO] " + '     Tokens: {} ms'.format(tokens_time))
-    print("[INFO] " + '     Write: {} ms'.format(write_time))
-    print("[INFO] " + '     Hash: {}'.format(hash_time))
-    print("[INFO] " + '     regex: {}'.format(regex_time))
+    print(f"[INFO] Project finished <{proj_id},{proj_path}> (process {proccess_num}))")
+    print(f"[INFO]  ({proccess_num}): Total: {p_elapsed} ms")
+    print(f"[INFO]      Zip: {zip_time}")
+    print(f"[INFO]      Read: {file_time}")
+    print(f"[INFO]      Separators: {string_time} ms")
+    print(f"[INFO]      Tokens: {tokens_time} ms")
+    print(f"[INFO]      Write: {write_time} ms")
+    print(f"[INFO]      Hash: {hash_time}")
+    print(f"[INFO]      regex: {regex_time}")
 
 
 def process_projects(process_num, list_projects, base_file_id, global_queue):
@@ -216,13 +214,13 @@ def process_projects(process_num, list_projects, base_file_id, global_queue):
     global file_count
     file_count = 0
     with open(file_files_tokens_file, 'a+') as FILE_tokens, open(file_bookkeeping_proj_name, 'a+') as FILE_bookkeeping, open(file_files_stats_file, 'a+') as FILE_stats:
-        print("[INFO] " + "Process %s starting", process_num)
+        print(f"[INFO] Process {process_num} starting")
         p_start = dt.datetime.now()
         for proj_id, proj_path in list_projects:
             process_one_project(process_num, str(proj_id), proj_path, base_file_id, FILE_tokens, FILE_bookkeeping, FILE_stats)
 
     p_elapsed = (dt.datetime.now() - p_start).seconds
-    print("[INFO] " + 'Process %s finished. %s files in %ss.', process_num, file_count, p_elapsed)
+    print(f"[INFO] Process {process_num} finished. {file_count} files in {p_elapsed}s.")
 
     # Let parent know
     global_queue.put((process_num, file_count))
