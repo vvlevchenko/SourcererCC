@@ -163,7 +163,7 @@ def process_zip_ball(process_num, zip_file, proj_id, proj_path, proj_url, base_f
     print(f"[INFO] Attempting to process_zip_ball {zip_file}")
     with zipfile.ZipFile(proj_path, 'r') as my_file:
         for file in my_file.infolist():
-            if not os.path.splitext(file.filename)[1] in file_extensions:
+            if not os.path.splitext(file.filename)[1] in language_config["file_extensions"]:
                 continue
 
             file_id = process_num * MULTIPLIER + base_file_id + file_count
