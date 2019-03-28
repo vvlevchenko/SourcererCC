@@ -53,7 +53,7 @@ def read_config():
     # Reading Language settings
     language_config["separators"] = config.get('Language', 'separators').strip('"').split(' ')
     language_config["comment_inline"] = re.escape(config.get('Language', 'comment_inline'))
-    language_config["comment_inline_pattern"] = comment_inline + '.*?$'
+    language_config["comment_inline_pattern"] = language_config["comment_inline"] + '.*?$'
     language_config["comment_open_tag"] = re.escape(config.get('Language', 'comment_open_tag'))
     language_config["comment_close_tag"] = re.escape(config.get('Language', 'comment_close_tag'))
     language_config["comment_open_close_pattern"] = language_config["comment_open_tag"] + '.*?' + language_config["comment_close_tag"]
