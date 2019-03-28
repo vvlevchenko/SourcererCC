@@ -15,29 +15,20 @@ MULTIPLIER = 50000000
 
 N_PROCESSES = 2
 PROJECTS_BATCH = 20
-FILE_projects_list = 'projects-list.txt'
-FILE_priority_projects = None
-PATH_stats_file_folder = 'files_stats'
-PATH_bookkeeping_proj_folder = 'bookkeeping_projs'
-PATH_tokens_file_folder = 'files_tokens'
-
-# Reading Language settings
-separators = ''
-comment_inline = ''
-comment_inline_pattern = comment_inline + '.*?$'
-comment_open_tag = ''
-comment_close_tag = ''
-comment_open_close_pattern = comment_open_tag + '.*?' + comment_close_tag
-file_extensions = '.none'
-
+dirs_config = {}
+dirs_config["projects_list"] = 'projects-list.txt'
+dirs_config["priority_projects_list"] = None
+dirs_config["stats_folder"] = 'files_stats'
+dirs_config["bookkeeping_folder"] = 'bookkeeping_projs'
+dirs_config["tokens_file"] = 'files_tokens'
+language_config = {}
 file_count = 0
 
 
 def read_config():
-    global N_PROCESSES, PROJECTS_BATCH, FILE_projects_list, FILE_priority_projects
-    global PATH_stats_file_folder, PATH_bookkeeping_proj_folder, PATH_tokens_file_folder
-    global separators, comment_inline, comment_inline_pattern, comment_open_tag, comment_close_tag, comment_open_close_pattern
-    global file_extensions
+    global N_PROCESSES, PROJECTS_BATCH
+    global dirs_config
+    global language_config
     global init_file_id
     global init_proj_id
 
@@ -53,21 +44,21 @@ def read_config():
     # Get info from config.ini into global variables
     N_PROCESSES = config.getint('Main', 'N_PROCESSES')
     PROJECTS_BATCH = config.getint('Main', 'PROJECTS_BATCH')
-    FILE_projects_list = config.get('Main', 'FILE_projects_list')
-    if config.has_option('Main', 'FILE_priority_projects'):
-        FILE_priority_projects = config.get('Main', 'FILE_priority_projects')
-    PATH_stats_file_folder = config.get('Folders/Files', 'PATH_stats_file_folder')
-    PATH_bookkeeping_proj_folder = config.get('Folders/Files', 'PATH_bookkeeping_proj_folder')
-    PATH_tokens_file_folder = config.get('Folders/Files', 'PATH_tokens_file_folder')
+    dirs_config["projects_list"] = config.get('Main', 'projects_list')
+    if config.has_option('Main', 'priority_projects_list'):
+        dirs_config["priority_projects_list"] = config.get('Main', 'priority_projects_list')
+    dirs_config["stats_folder"] = config.get('Folders/Files', 'stats_folder')
+    dirs_config["bookkeeping_folder"] = config.get('Folders/Files', 'bookkeeping_folder')
+    dirs_config["tokens_file"] = config.get('Folders/Files', 'tokens_file')
 
     # Reading Language settings
-    separators = config.get('Language', 'separators').strip('"').split(' ')
-    comment_inline = re.escape(config.get('Language', 'comment_inline'))
-    comment_inline_pattern = comment_inline + '.*?$'
-    comment_open_tag = re.escape(config.get('Language', 'comment_open_tag'))
-    comment_close_tag = re.escape(config.get('Language', 'comment_close_tag'))
-    comment_open_close_pattern = comment_open_tag + '.*?' + comment_close_tag
-    file_extensions = config.get('Language', 'File_extensions').split(' ')
+    language_config["separators"] = config.get('Language', 'separators').strip('"').split(' ')
+    language_config["comment_inline"] = re.escape(config.get('Language', 'comment_inline'))
+    language_config["comment_inline_pattern"] = comment_inline + '.*?$'
+    language_config["comment_open_tag"] = re.escape(config.get('Language', 'comment_open_tag'))
+    language_config["comment_close_tag"] = re.escape(config.get('Language', 'comment_close_tag'))
+    language_config["comment_open_close_pattern"] = comment_open_tag + '.*?' + comment_close_tag
+    language_config["file_extensions"] = config.get('Language', 'File_extensions').split(' ')
     # Reading config settings
     init_file_id = config.getint('Config', 'init_file_id')
     init_proj_id = config.getint('Config', 'init_proj_id')
@@ -315,9 +306,9 @@ def process_one_project(process_num, proj_id, proj_path, base_file_id, FILE_toke
 
 
 def process_projects(process_num, list_projects, base_file_id, global_queue, project_format):
-    file_files_stats_file = os.path.join(PATH_stats_file_folder, 'files-stats-' + str(process_num) + '.stats')
-    file_bookkeeping_proj_name = os.path.join(PATH_bookkeeping_proj_folder, 'bookkeeping-proj-{}.projs'.format(process_num))
-    file_files_tokens_file = os.path.join(PATH_tokens_file_folder, 'files-tokens-{}.tokens'.format(process_num))
+    file_files_stats_file = os.path.join(dirs_config["stats_folder"], 'files-stats-' + str(process_num) + '.stats')
+    file_bookkeeping_proj_name = os.path.join(dirs_config["bookkeeping_folder"], 'bookkeeping-proj-{}.projs'.format(process_num))
+    file_files_tokens_file = os.path.join(dirs_config["tokens_file"], 'files-tokens-{}.tokens'.format(process_num))
 
     global file_count
     file_count = 0
@@ -378,8 +369,8 @@ if __name__ == '__main__':
     p_start = dt.datetime.now()
 
     prio_proj_paths = []
-    if FILE_priority_projects is not None:
-        with open(FILE_priority_projects) as f:
+    if dirs_config["priority_projects_list"] is not None:
+        with open(dirs_config["priority_projects_list"]) as f:
             for line in f:
                 line_split = line.strip('\n')
                 prio_proj_paths.append(line_split)
@@ -388,7 +379,7 @@ if __name__ == '__main__':
     proj_paths = []
     print('\'', project_format, '\'', 'format')
     if project_format == 'leidos':
-        with open(FILE_projects_list) as f:
+        with open(dirs_config["projects_list"]) as f:
             for line in f:
                 prio = False
                 line_split = line.strip('\n')
@@ -404,14 +395,14 @@ if __name__ == '__main__':
                 proj_paths.append(line.strip("\n"))
     proj_paths = list(zip(range(1, len(proj_paths) + 1), proj_paths))
 
-    if os.path.exists(PATH_stats_file_folder) or os.path.exists(PATH_bookkeeping_proj_folder) or os.path.exists(PATH_tokens_file_folder):
-        missing_files = filter(os.path.exists, [PATH_stats_file_folder, PATH_bookkeeping_proj_folder, PATH_tokens_file_folder])
+    if os.path.exists(dirs_config["stats_folder"]) or os.path.exists(dirs_config["bookkeeping_folder"]) or os.path.exists(dirs_config["tokens_file"]):
+        missing_files = filter(os.path.exists, [dirs_config["stats_folder"], dirs_config["bookkeeping_folder"], dirs_config["tokens_file"]])
         print('ERROR - Folder [' + '] or ['.join(missing_files) + '] already exists!')
         sys.exit(1)
     else:
-        os.makedirs(PATH_stats_file_folder)
-        os.makedirs(PATH_bookkeeping_proj_folder)
-        os.makedirs(PATH_tokens_file_folder)
+        os.makedirs(dirs_config["stats_folder"])
+        os.makedirs(dirs_config["bookkeeping_folder"])
+        os.makedirs(dirs_config["tokens_file"])
 
     # Split list of projects into N_PROCESSES lists
     # proj_paths_list = [ proj_paths[i::N_PROCESSES] for i in xrange(N_PROCESSES) ]
