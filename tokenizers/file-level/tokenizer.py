@@ -44,12 +44,12 @@ def read_config():
     # Get info from config.ini into global variables
     N_PROCESSES = config.getint('Main', 'N_PROCESSES')
     PROJECTS_BATCH = config.getint('Main', 'PROJECTS_BATCH')
-    dirs_config["projects_list"] = config.get('Main', 'projects_list')
+    dirs_config["projects_list"] = config.get('Main', 'FILE_projects_list')
     if config.has_option('Main', 'priority_projects_list'):
-        dirs_config["priority_projects_list"] = config.get('Main', 'priority_projects_list')
-    dirs_config["stats_folder"] = config.get('Folders/Files', 'stats_folder')
-    dirs_config["bookkeeping_folder"] = config.get('Folders/Files', 'bookkeeping_folder')
-    dirs_config["tokens_file"] = config.get('Folders/Files', 'tokens_file')
+        dirs_config["priority_projects_list"] = config.get('Main', 'FILE_priority_projects')
+    dirs_config["stats_folder"] = config.get('Folders/Files', 'PATH_stats_file_folder')
+    dirs_config["bookkeeping_folder"] = config.get('Folders/Files', 'PATH_bookkeeping_proj_folder')
+    dirs_config["tokens_file"] = config.get('Folders/Files', 'PATH_tokens_file_folder')
 
     # Reading Language settings
     language_config["separators"] = config.get('Language', 'separators').strip('"').split(' ')
