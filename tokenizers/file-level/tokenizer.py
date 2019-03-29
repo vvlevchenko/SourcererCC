@@ -87,9 +87,9 @@ def tokenize_files(file_string):
 
     re_time = dt.datetime.now()
     # Remove tagged comments
-    file_string = re.sub(comment_open_close_pattern, '', file_string, flags=re.DOTALL)
+    file_string = re.sub(language_config["comment_open_close_pattern"], '', file_string, flags=re.DOTALL)
     # Remove end of line comments
-    file_string = re.sub(comment_inline_pattern, '', file_string, flags=re.MULTILINE)
+    file_string = re.sub(language_config["comment_inline_pattern"], '', file_string, flags=re.MULTILINE)
     re_time = (dt.datetime.now() - re_time).microseconds
 
     file_string = "".join([s for s in file_string.splitlines(True) if s.strip()]).strip()
@@ -101,7 +101,7 @@ def tokenize_files(file_string):
     file_string_for_tokenization = file_string
     # Transform separators into spaces (remove them)
     s_time = dt.datetime.now()
-    for x in separators:
+    for x in language_config["separators"]:
         file_string_for_tokenization = file_string_for_tokenization.replace(x, ' ')
     s_time = (dt.datetime.now() - s_time).microseconds
     # Create a list of tokens
