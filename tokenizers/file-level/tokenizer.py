@@ -186,7 +186,7 @@ def process_zip_ball(process_num, zip_file, proj_id, proj_path, proj_url, base_f
 
             file_path = file.filename
             file_times = process_file_contents(file_string, proj_id, file_id, zip_file, file_path, file_bytes, proj_url, FILE_tokens_file, FILE_stats_file)
-            for time_name, time in file_times:
+            for time_name, time in file_times.items():
                 times[time_name] += time
     print("[INFO] Successfully ran process_zip_ball {zip_file}")
     return times
