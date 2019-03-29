@@ -145,7 +145,7 @@ def process_file_contents(file_string, proj_id, file_id, container_path, file_pa
     start_time = dt.datetime.now()
     FILE_stats_file.write(f'{proj_id},{file_id},"{file_path}","{file_url}","{file_hash}",{file_bytes},{lines},{LOC},{SLOC}\n')
     FILE_tokens_file.write(f'{proj_id},{file_id},{tokens_count_total},{tokens_count_unique}, {token_hash}@#@{tokens}\n')
-    file_times["write_time"] += (dt.datetime.now() - start_time).microseconds
+    file_times["write_time"] = (dt.datetime.now() - start_time).microseconds
 
     return file_times
 
