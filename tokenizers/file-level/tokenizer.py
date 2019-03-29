@@ -124,9 +124,9 @@ def tokenize_files(file_string):
     tokens = ','.join(['{}@@::@@{}'.format(k, v) for k, v in file_string_for_tokenization.items()])
     times["tokens_time"] = (dt.datetime.now() - start_time).microseconds
 
-    h_time = dt.datetime.now()
+    start_time = dt.datetime.now()
     tokens_hash = md5_hash(tokens)
-    times["hash_time"] += (dt.datetime.now() - h_time).microseconds
+    times["hash_time"] += (dt.datetime.now() - start_time).microseconds
 
     final_tokens = (tokens_count_total, tokens_count_unique, tokens_hash, tokens)
     return final_stats, final_tokens, times
@@ -146,7 +146,7 @@ def process_file_contents(file_string, proj_id, file_id, container_path, file_pa
     FILE_stats_file.write(f'{proj_id},{file_id},"{file_path}","{file_url}","{file_hash}",{file_bytes},{lines},{LOC},{SLOC}\n')
     FILE_tokens_file.write(f'{proj_id},{file_id},{tokens_count_total},{tokens_count_unique}, {token_hash}@#@{tokens}\n')
     file_times["write_time"] += (dt.datetime.now() - start_time).microseconds
-    
+
     return file_times
 
 
