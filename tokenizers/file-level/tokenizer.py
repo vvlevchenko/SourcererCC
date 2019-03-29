@@ -77,20 +77,22 @@ def md5_hash(string):
 
 
 def tokenize_files(file_string):
+    times = {}
     h_time = dt.datetime.now()
     file_hash = md5_hash(file_string)
-    hash_time = (dt.datetime.now() - h_time).microseconds
+    times["hash_time"] = (dt.datetime.now() - h_time).microseconds
+
     lines = count_lines(file_string)
     file_string = "".join([s for s in file_string.splitlines(True) if s.strip()])
 
     loc = count_lines(file_string)
 
-    re_time = dt.datetime.now()
+    start_time = dt.datetime.now()
     # Remove tagged comments
     file_string = re.sub(language_config["comment_open_close_pattern"], '', file_string, flags=re.DOTALL)
     # Remove end of line comments
     file_string = re.sub(language_config["comment_inline_pattern"], '', file_string, flags=re.MULTILINE)
-    re_time = (dt.datetime.now() - re_time).microseconds
+    times["regex_time"] = (dt.datetime.now() - start_time).microseconds
 
     file_string = "".join([s for s in file_string.splitlines(True) if s.strip()]).strip()
     sloc = file_string.count('\n')
@@ -99,11 +101,13 @@ def tokenize_files(file_string):
     final_stats = (file_hash, lines, loc, sloc)
     # Rather a copy of the file string here for tokenization
     file_string_for_tokenization = file_string
+
     # Transform separators into spaces (remove them)
-    s_time = dt.datetime.now()
+    start_time = dt.datetime.now()
     for x in language_config["separators"]:
         file_string_for_tokenization = file_string_for_tokenization.replace(x, ' ')
-    s_time = (dt.datetime.now() - s_time).microseconds
+    times["string_time"] = (dt.datetime.now() - start_time).microseconds
+
     # Create a list of tokens
     file_string_for_tokenization = file_string_for_tokenization.split()
     # Total number of tokens
@@ -114,40 +118,36 @@ def tokenize_files(file_string):
     file_string_for_tokenization = dict(file_string_for_tokenization)
     # Unique number of tokens
     tokens_count_unique = len(file_string_for_tokenization)
-    t_time = dt.datetime.now()
+
     # SourcererCC formatting
+    start_time = dt.datetime.now()
     tokens = ','.join(['{}@@::@@{}'.format(k, v) for k, v in file_string_for_tokenization.items()])
-    t_time = (dt.datetime.now() - t_time).microseconds
-    # MD5
+    times["tokens_time"] = (dt.datetime.now() - start_time).microseconds
+
     h_time = dt.datetime.now()
     tokens_hash = md5_hash(tokens)
-    hash_time += (dt.datetime.now() - h_time).microseconds
+    times["hash_time"] += (dt.datetime.now() - h_time).microseconds
+
     final_tokens = (tokens_count_total, tokens_count_unique, tokens_hash, tokens)
-    return final_stats, final_tokens, [s_time, t_time, hash_time, re_time]
+    return final_stats, final_tokens, times
 
 
 def process_file_contents(file_string, proj_id, file_id, container_path, file_path, file_bytes, proj_url, FILE_tokens_file, FILE_stats_file):
     global file_count
 
     file_count += 1
-    (final_stats, final_tokens, file_parsing_times) = tokenize_files(file_string)
+    (final_stats, final_tokens, file_times) = tokenize_files(file_string)
     (file_hash, lines, LOC, SLOC) = final_stats
     (tokens_count_total, tokens_count_unique, token_hash, tokens) = final_tokens
-    file_url = proj_url + '/' + file_path[7:].replace(' ', '%20')
+    file_url = f"{proj_url}/" + file_path[7:].replace(' ', '%20')
     file_path = os.path.join(container_path, file_path)
-    ww_time = dt.datetime.now()
+
+    start_time = dt.datetime.now()
     FILE_stats_file.write(f'{proj_id},{file_id},"{file_path}","{file_url}","{file_hash}",{file_bytes},{lines},{LOC},{SLOC}\n')
-    w_time = (dt.datetime.now() - ww_time).microseconds
-    ww_time = dt.datetime.now()
-    FILE_tokens_file.write(f"{proj_id},{file_id},{tokens_count_total},{tokens_count_unique}, {token_hash}@#@{tokens}\n")
-    w_time += (dt.datetime.now() - ww_time).microseconds
-    return {
-        "string_time": file_parsing_times[0],
-        "tokens_time": file_parsing_times[1],
-        "hash_time": file_parsing_times[2],
-        "regex_time": file_parsing_times[3],
-        "write_time": w_time
-    }
+    FILE_tokens_file.write(f'{proj_id},{file_id},{tokens_count_total},{tokens_count_unique}, {token_hash}@#@{tokens}\n')
+    file_times["write_time"] += (dt.datetime.now() - start_time).microseconds
+    
+    return file_times
 
 
 def process_zip_ball(process_num, zip_file, proj_id, proj_path, proj_url, base_file_id, FILE_tokens_file, FILE_bookkeeping_proj, FILE_stats_file):
@@ -162,29 +162,31 @@ def process_zip_ball(process_num, zip_file, proj_id, proj_path, proj_url, base_f
     }
     print(f"[INFO] Attempting to process_zip_ball {zip_file}")
     with zipfile.ZipFile(proj_path, 'r') as my_file:
-        for file in my_file.infolist():
-            if not os.path.splitext(file.filename)[1] in language_config["file_extensions"]:
+        for code_file in my_file.infolist():
+            if not os.path.splitext(code_file.filename)[1] in language_config["file_extensions"]:
                 continue
 
             file_id = process_num * MULTIPLIER + base_file_id + file_count
-            file_bytes = str(file.file_size)
+            file_bytes = str(code_file.file_size)
+            file_path = code_file.filename
+            full_code_file_path = os.path.join(proj_path, file_path)
+
             z_time = dt.datetime.now()
             try:
-                my_zip_file = my_file.open(file.filename, 'r')
+                my_zip_file = my_file.open(file_path, 'r')
             except:
-                print("[WARNING] Unable to open file (1) <" + os.path.join(proj_path, file.filename) + f'> (process {process_num})')
+                print(f"[WARNING] Unable to open file <{full_code_file_path}> (process {process_num})")
                 break
             times["zip_time"] += (dt.datetime.now() - z_time).microseconds
 
             if my_zip_file is None:
-                print("[WARNING] Unable to open file (2) <" + os.path.join(proj_path, file.filename) + f'> (process {process_num})')
+                print(f"[WARNING] Opened file is None <{full_code_file_path}> (process {process_num})")
                 break
 
             f_time = dt.datetime.now()
             file_string = my_zip_file.read().decode("utf-8")
             times["file_time"] += (dt.datetime.now() - f_time).microseconds
 
-            file_path = file.filename
             file_times = process_file_contents(file_string, proj_id, file_id, zip_file, file_path, file_bytes, proj_url, FILE_tokens_file, FILE_stats_file)
             for time_name, time in file_times.items():
                 times[time_name] += time
