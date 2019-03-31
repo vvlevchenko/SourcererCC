@@ -13,8 +13,8 @@ def run_command(cmd):
 
 
 def get_full_path(filename):
-    cur_path = os.getcwd()
-    return f"{cur_path}/{filename}"
+    cur_dir = os.path.dirname(os.path.realpath(__file__))
+    return f"{cur_dir}/{filename}"
 
 
 def clear_file_mode_tokenizer_files():
