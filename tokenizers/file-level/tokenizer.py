@@ -132,25 +132,24 @@ def tokenize_files(file_string):
     return final_stats, final_tokens, times
 
 
-def process_file_contents(file_string, proj_id, file_id, container_path, file_path, file_bytes, proj_url, FILE_tokens_file, FILE_stats_file):
+def process_file_contents(file_string, proj_id, file_id, container_path, file_path, file_bytes, FILE_tokens_file, FILE_stats_file):
     global file_count
 
     file_count += 1
     (final_stats, final_tokens, file_times) = tokenize_files(file_string)
     (file_hash, lines, LOC, SLOC) = final_stats
     (tokens_count_total, tokens_count_unique, token_hash, tokens) = final_tokens
-    file_url = f"{proj_url}/" + file_path[7:].replace(' ', '%20')
     file_path = os.path.join(container_path, file_path)
 
     start_time = dt.datetime.now()
-    FILE_stats_file.write(f'{proj_id},{file_id},"{file_path}","{file_url}","{file_hash}",{file_bytes},{lines},{LOC},{SLOC}\n')
+    FILE_stats_file.write(f'{proj_id},{file_id},"{file_path}","{file_hash}",{file_bytes},{lines},{LOC},{SLOC}\n')
     FILE_tokens_file.write(f'{proj_id},{file_id},{tokens_count_total},{tokens_count_unique}, {token_hash}@#@{tokens}\n')
     file_times["write_time"] = (dt.datetime.now() - start_time).microseconds
 
     return file_times
 
 
-def process_zip_ball(process_num, zip_file, proj_id, proj_path, proj_url, base_file_id, FILE_tokens_file, FILE_bookkeeping_proj, FILE_stats_file):
+def process_zip_ball(process_num, zip_file, proj_id, proj_path, base_file_id, FILE_tokens_file, FILE_bookkeeping_proj, FILE_stats_file):
     times = {
         "zip_time": 0,
         "file_time": 0,
@@ -187,7 +186,7 @@ def process_zip_ball(process_num, zip_file, proj_id, proj_path, proj_url, base_f
             file_string = my_zip_file.read().decode("utf-8")
             times["file_time"] += (dt.datetime.now() - f_time).microseconds
 
-            file_times = process_file_contents(file_string, proj_id, file_id, zip_file, file_path, file_bytes, proj_url, FILE_tokens_file, FILE_stats_file)
+            file_times = process_file_contents(file_string, proj_id, file_id, zip_file, file_path, file_bytes, FILE_tokens_file, FILE_stats_file)
             for time_name, time in file_times.items():
                 times[time_name] += time
     print("[INFO] Successfully ran process_zip_ball {zip_file}")
@@ -201,9 +200,8 @@ def process_one_project(process_num, proj_id, proj_path, base_file_id, FILE_toke
         print(f"[WARNING] Unable to open project <{proj_id},{proj_path}> (process {process_num})")
         return
 
-    proj_url = 'NULL'
     zip_file = proj_path
-    times = process_zip_ball(process_num, zip_file, proj_id, proj_path, proj_url, base_file_id, FILE_tokens_file, FILE_bookkeeping_proj, FILE_stats_file)
+    times = process_zip_ball(process_num, zip_file, proj_id, proj_path, base_file_id, FILE_tokens_file, FILE_bookkeeping_proj, FILE_stats_file)
     zip_time, file_time, string_time, tokens_time, write_time, hash_time, regex_time = (-1, -1, -1, -1, -1, -1, -1)
     if times is not None:
         zip_time = times["zip_time"]
@@ -214,7 +212,7 @@ def process_one_project(process_num, proj_id, proj_path, base_file_id, FILE_toke
         hash_time = times["hash_time"]
         regex_time = times["regex_time"]
 
-    FILE_bookkeeping_proj.write(proj_id + ',\"' + proj_path + '\",\"' + proj_url + '\"\n')
+    FILE_bookkeeping_proj.write(f'{proj_id},"{proj_path}"\n')
     p_elapsed = dt.datetime.now() - p_start
     print(f"[INFO] Project finished <{proj_id},{proj_path}> (process {process_num}))")
     print(f"[INFO]  ({process_num}): Total: {p_elapsed} ms")

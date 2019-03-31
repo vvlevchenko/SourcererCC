@@ -48,8 +48,7 @@ def get_projects_info(bookkeeping_files_path):
         for line in get_file_lines(bookkeeping_file):
             project_info = {
                 "project_id": line.split(",")[0],
-                "project_path": line.split(",")[1],
-                "project_url": line.split(",")[2]
+                "project_path": line.split(",")[1]
             }
             projects_info.append(project_info)
     return projects_info
@@ -88,12 +87,11 @@ def get_stats_info(stats_files_path, blocks_mode):
         return {
             "project_id": line_parts[0],
             "file_path": line_parts[2],
-            "file_url": line_parts[3],
-            "file_hash": line_parts[4],
-            "file_size": line_parts[5],
-            "lines": line_parts[6],
-            "LOC": line_parts[7],
-            "SLOC": line_parts[8]
+            "file_hash": line_parts[3],
+            "file_size": line_parts[4],
+            "lines": line_parts[5],
+            "LOC": line_parts[6],
+            "SLOC": line_parts[7]
         }
     def parse_block_line(line_parts):
         return {
