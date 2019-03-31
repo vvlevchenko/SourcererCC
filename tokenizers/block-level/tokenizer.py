@@ -19,7 +19,7 @@ MULTIPLIER = 50000000
 
 N_PROCESSES = 2
 PROJECTS_BATCH = 20
-FILE_projects_list = 'projects-list.txt'
+FILE_projects_list = 'project-list.txt'
 FILE_priority_projects = None
 PATH_stats_file_folder = 'files_stats'
 PATH_bookkeeping_proj_folder = 'bookkeeping_projs'
