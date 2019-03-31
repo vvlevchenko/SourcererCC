@@ -152,9 +152,11 @@ def print_results(results_file, stats_files, blocks_mode):
                 start_line = stats[code_id]["start_line"]
                 end_line = stats[code_id]["end_line"]
                 total_lines = end_line - start_line + 1
-                formatted_titles[code_id] = f"{filename}(lines {start_line}-{end_line}, total {total_lines})")
+                formatted_titles[code_id] = f"{filename}(lines {start_line}-{end_line}, total {total_lines})"
     else:
-        formatted_titles = {code_id: "{}({} SLOC)".format(get_file_name(stats[code_id]["file_path"]), stats[code_id]["SLOC"]) for code_id in stats.keys()}
+        formatted_titles = {
+            code_id: "{}({} SLOC)".format(get_file_name(stats[code_id]["file_path"]), stats[code_id]["SLOC"]) for code_id in stats.keys()
+        }
     print("Results list:")
     for code_id, code_id_list in results.items():
         print("{} is similar to:".format(formatted_titles[code_id]))
