@@ -142,10 +142,10 @@ def process_file_contents(file_string, proj_id, file_id, container_path, file_pa
     file_url = proj_url + '/' + file_path[7:].replace(' ', '%20')
     file_path = os.path.join(container_path, file_path)
     ww_time = dt.datetime.now()
-    FILE_stats_file.write(','.join([proj_id, str(file_id), '\"' + file_path + '\"', '\"' + file_url + '\"', '\"' + file_hash + '\"', file_bytes, str(lines), str(LOC), str(SLOC)]) + '\n')
+    FILE_stats_file.write(f"{proj_id},{file_id},\"{file_path}\",\"{file_url}\",\"{file_hash}\",{file_bytes},{lines},{LOC},{SLOC}\n")
     w_time = (dt.datetime.now() - ww_time).microseconds
     ww_time = dt.datetime.now()
-    FILE_tokens_file.write(','.join([proj_id, str(file_id), str(tokens_count_total), str(tokens_count_unique), token_hash + tokens]) + '\n')
+    FILE_tokens_file.write(f"{proj_id},{file_id},{tokens_count_total},{tokens_count_unique},{token_hash}{tokens}\n")
     w_time += (dt.datetime.now() - ww_time).microseconds
     return file_parsing_times + [w_time]  # [s_time, t_time, w_time, hash_time, re_time]
 
@@ -320,14 +320,14 @@ def process_projects(process_num, list_projects, base_file_id, global_queue, pro
 
     global file_count
     file_count = 0
-    with open(file_files_tokens_file, 'a+') as FILE_tokens, open(file_bookkeeping_proj_name, 'a+') as FILE_bookkeeping, open(file_files_stats_file, 'a+') as FILE_stats:
-        print("[INFO] " + "Process %s starting", process_num)
+    with open(file_files_tokens_file, 'a+', encoding="utf-8") as FILE_tokens, open(file_bookkeeping_proj_name, 'a+', encoding="utf-8") as FILE_bookkeeping, open(file_files_stats_file, 'a+', encoding="utf-8") as FILE_stats:
+        print(f"[INFO] Process {process_num} starting")
         p_start = dt.datetime.now()
         for proj_id, proj_path in list_projects:
             process_one_project(process_num, str(proj_id), proj_path, base_file_id, FILE_tokens, FILE_bookkeeping, FILE_stats, project_format)
 
     p_elapsed = (dt.datetime.now() - p_start).seconds
-    print("[INFO] " + 'Process %s finished. %s files in %ss.', process_num, file_count, p_elapsed)
+    print(f"[INFO] Process {process_num} finished. {file_count} files in {p_elapsed} sec")
 
     # Let parent know
     global_queue.put((process_num, file_count))

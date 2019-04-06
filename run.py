@@ -84,9 +84,9 @@ def run_block_mode():
 def run_file_mode():
     os.makedirs(get_full_path("clone-detector/input/dataset"))
     run([get_full_path("tokenizers/file-level/tokenizer.py"), "zip"], cwd=get_full_path("tokenizers/file-level/"))
-    with open(get_full_path("clone-detector/input/dataset/blocks.file"), "w") as blocks_file:
+    with open(get_full_path("clone-detector/input/dataset/blocks.file"), "w", encoding="utf-8") as blocks_file:
         for out_file in glob.glob(get_full_path("tokenizers/file-level/files_tokens/*")):
-            with open(out_file, "r") as out_file_descr:
+            with open(out_file, "r", encoding="utf-8") as out_file_descr:
                 blocks_file.writelines(out_file_descr.readlines())
     run_algo()
     stats_file_path = get_full_path("tokenizers/file-level/files_stats/")
@@ -105,10 +105,10 @@ if __name__ == "__main__":
     file_mode_projects_list_path = get_full_path("tokenizers/file-level/project-list.txt")
     block_mode_input_dir_path = get_full_path("tokenizers/block-level/tokenizer-sample-input")
     block_mode_projects_list_path = get_full_path("tokenizers/block-level/project-list.txt")
-    with open(file_mode_projects_list_path, "w") as out_file:
+    with open(file_mode_projects_list_path, "w", encoding="utf-8") as out_file:
         run([download_script_path, urls_list_path, file_mode_input_dir_path], stdout=out_file)
-    with open(block_mode_projects_list_path, "w") as out_file:
+    with open(block_mode_projects_list_path, "w", encoding="utf-8") as out_file:
         run([download_script_path, urls_list_path, block_mode_input_dir_path], stdout=out_file)
 
-    run_block_mode()
+    #run_block_mode()
     run_file_mode()

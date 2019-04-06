@@ -24,8 +24,8 @@ class Spliter(object):
         file_count = 1
         try:
             print("creating split ", file_count)
-            outfile = open("query_{part}.file".format(part=file_count), 'w')
-            with open(self.input_filename, 'r') as inputfile:
+            outfile = open("query_{part}.file".format(part=file_count), 'w', encoding="utf-8")
+            with open(self.input_filename, 'r', encoding="utf-8") as inputfile:
                 for row in inputfile:
                     if count < line_limit:
                         outfile.write(row)
@@ -37,7 +37,7 @@ class Spliter(object):
                         line_limit = line_limit + math.ceil(0.5 * self.base_x)
                         print("line_limit is ", line_limit)
                         print("creating split ", file_count)
-                        outfile = open("query_{part}.file".format(part=file_count), 'w')
+                        outfile = open("query_{part}.file".format(part=file_count), 'w', encoding="utf-8")
                         outfile.write(row)
                     count += 1
             outfile.flush()
@@ -48,7 +48,7 @@ class Spliter(object):
 
     def get_num_lines_in_input_file(self):
         res = 0
-        with open(self.input_filename) as f:
+        with open(self.input_filename, "r", encoding="utf-8") as f:
             for _ in f:
                 res += 1
         print("total lines in the inputfile: {0} ".format(res + 1))
