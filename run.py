@@ -110,5 +110,5 @@ if __name__ == "__main__":
     with open(block_mode_projects_list_path, "w", encoding="utf-8") as out_file:
         run([download_script_path, urls_list_path, block_mode_input_dir_path], stdout=out_file)
 
-    #run_block_mode()
+    run_block_mode()
     run_file_mode()
