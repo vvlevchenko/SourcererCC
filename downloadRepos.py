@@ -13,7 +13,7 @@ def download_project(url):
 
 def save_project(url, projects_dir):
     project_content = download_project(url)
-    user, project = re.findall(r"https://github.com/([^/]*)/(.*)/?$", url)[0]
+    user, project = re.findall(r"https://github.com/([^/]*)/([^/]*)/?$", url)[0]
     filename = "{}--{}.zip".format(user, project)
     open("{}/{}".format(projects_dir, filename), "wb+").write(project_content)
     return filename
