@@ -14,6 +14,7 @@ MULTIPLIER = 50000000
 
 N_PROCESSES = 2
 PROJECTS_BATCH = 20
+
 dirs_config = {}
 dirs_config["projects_list"] = 'projects-list.txt'
 dirs_config["priority_projects_list"] = None
@@ -21,6 +22,16 @@ dirs_config["stats_folder"] = 'files_stats'
 dirs_config["bookkeeping_folder"] = 'bookkeeping_projs'
 dirs_config["tokens_file"] = 'files_tokens'
 language_config = {}
+
+# Reading Language settings
+separators = ''
+comment_inline = ''
+comment_inline_pattern = comment_inline + '.*?$'
+comment_open_tag = ''
+comment_close_tag = ''
+comment_open_close_pattern = comment_open_tag + '.*?' + comment_close_tag
+file_extensions = '.none'
+
 file_count = 0
 
 
@@ -140,7 +151,6 @@ def process_file_contents(file_string, proj_id, file_id, container_path, file_pa
     (file_hash, lines, LOC, SLOC) = final_stats
     (tokens_count_total, tokens_count_unique, token_hash, tokens) = final_tokens
     file_path = os.path.join(container_path, file_path)
-
     start_time = dt.datetime.now()
     FILE_stats_file.write(f'{proj_id},{file_id},"{file_path}","{file_hash}",{file_bytes},{lines},{LOC},{SLOC}\n')
     FILE_tokens_file.write(f'{proj_id},{file_id},{tokens_count_total},{tokens_count_unique}, {token_hash}@#@{tokens}\n')
@@ -232,14 +242,14 @@ def process_projects(process_num, list_projects, base_file_id, global_queue):
 
     global file_count
     file_count = 0
-    with open(file_files_tokens_file, 'a+') as FILE_tokens, open(file_bookkeeping_proj_name, 'a+') as FILE_bookkeeping, open(file_files_stats_file, 'a+') as FILE_stats:
+    with open(file_files_tokens_file, 'a+', encoding="utf-8") as FILE_tokens, open(file_bookkeeping_proj_name, 'a+', encoding="utf-8") as FILE_bookkeeping, open(file_files_stats_file, 'a+', encoding="utf-8") as FILE_stats:
         print(f"[INFO] Process {process_num} starting")
         p_start = dt.datetime.now()
         for proj_id, proj_path in list_projects:
             process_one_project(process_num, str(proj_id), proj_path, base_file_id, FILE_tokens, FILE_bookkeeping, FILE_stats)
 
     p_elapsed = (dt.datetime.now() - p_start).seconds
-    print(f"[INFO] Process {process_num} finished. {file_count} files in {p_elapsed}s.")
+    print(f"[INFO] Process {process_num} finished. {file_count} files in {p_elapsed} sec")
 
     # Let parent know
     global_queue.put((process_num, file_count))
