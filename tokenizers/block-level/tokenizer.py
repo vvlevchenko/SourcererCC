@@ -237,6 +237,7 @@ def process_file_contents(file_string, proj_id, file_id, container_path, file_pa
     blocks_data = zip(range(10000, 99999), blocks_data)
 
     ww_time = dt.datetime.now()
+    w_time = -1
     try:
         for relative_id, block_data in blocks_data:
             (blocks_tokens, blocks_stats, experimental_values) = block_data
