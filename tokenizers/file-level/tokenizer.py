@@ -297,14 +297,14 @@ if __name__ == '__main__':
 
     prio_proj_paths = []
     if dirs_config["priority_projects_list"] is not None:
-        with open(dirs_config["priority_projects_list"]) as f:
+        with open(dirs_config["priority_projects_list"], "r", encoding="utf-8") as f:
             for line in f:
                 line_split = line.strip('\n')
                 prio_proj_paths.append(line_split)
         prio_proj_paths = zip(range(init_proj_id, len(prio_proj_paths) + init_proj_id), prio_proj_paths)
 
     proj_paths = []
-    with open(dirs_config["projects_list"]) as f:
+    with open(dirs_config["projects_list"], "r", encoding="utf-8") as f:
         for line in f:
             proj_paths.append(line.strip("\n"))
     proj_paths = list(zip(range(1, len(proj_paths) + 1), proj_paths))

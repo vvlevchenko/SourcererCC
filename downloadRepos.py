@@ -49,7 +49,7 @@ if __name__ == "__main__":
     project_list = []
     create_folder(destination_directory)
     projects_directory = re.search(r"/([a-zA-Z0-9-]+)$", destination_directory).group(1)
-    with open(urls_filename) as urls_file:
+    with open(urls_filename, "r", encoding="utf-8") as urls_file:
         for url in map(lambda x: x.strip("\n"), urls_file):
             filename = save_project(url, destination_directory)
             print(f"{projects_directory}/{filename}")

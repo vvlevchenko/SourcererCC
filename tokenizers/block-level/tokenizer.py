@@ -263,7 +263,7 @@ def process_regular_folder(process_num, proj_id, proj_path, proj_url, base_file_
     for file_path in result:
         z_time = dt.datetime.now()
         try:
-            my_file = io.open(os.path.join(proj_path, file_path), encoding='utf-8', errors='ignore')
+            my_file = io.open(os.path.join(proj_path, file_path), encoding='utf-8')
             file_bytes = str(os.stat(os.path.join(proj_path, file_path)).st_size)
         except Exception as e:
             print("[WARNING] Unable to open file (1) <{}> (process {})".format(file_path, process_num))
@@ -300,52 +300,6 @@ def process_regular_folder(process_num, proj_id, proj_path, proj_url, base_file_
     return zip_time, file_time, string_time, tokens_time, write_time, hash_time, regex_time
 
 
-def process_tgz_ball(process_num, tar_file, proj_id, proj_path, proj_url, base_file_id, file_tokens_file, file_stats_file):
-    zip_time = file_time = string_time = tokens_time = hash_time = write_time = regex_time = 0
-    try:
-        with tarfile.open(tar_file, 'r|*') as my_tar_file:
-            for file in my_tar_file:
-                if not file.isfile():
-                    continue
-
-                file_path = file.name
-                # Filter by the correct extension
-                if not os.path.splitext(file.name)[1] in file_extensions:
-                    continue
-
-                file_id = process_num * MULTIPLIER + base_file_id + file_count
-
-                z_time = dt.datetime.now()
-                try:
-                    myfile = my_tar_file.extractfile(file)
-                except Exception as e:
-                    print("[WARNING] Unable to open file (1) <{},{},{}> (process {})".format(proj_id, file_id, os.path.join(tar_file, file_path), process_num))
-                    print(e)
-                    continue
-                zip_time += (dt.datetime.now() - z_time).microseconds
-
-                if myfile is None:
-                    print("[WARNING] Unable to open file (2) <{},{},{}> (process {})".format(proj_id, file_id, os.path.join(tar_file, file_path), process_num))
-                    continue
-
-                f_time = dt.datetime.now()
-                file_string = myfile.read()
-                file_time += (dt.datetime.now() - f_time).microseconds
-
-                file_bytes = str(file.size)
-                times = process_file_contents(file_string, proj_id, file_id, tar_file, file_path, file_bytes, proj_url, file_tokens_file, file_stats_file)
-                string_time += times[0]
-                tokens_time += times[1]
-                hash_time += times[2]
-                regex_time += times[3]
-                write_time += times[4]
-    except Exception as e:
-        print("[WARNING] Unable to open tar on <{},{}> (process {})".format(proj_id, proj_path, process_num))
-        print("[WARNING] {}".format(e))
-        return
-    return zip_time, file_time, string_time, tokens_time, write_time, hash_time, regex_time
-
-
 def process_zip_ball(process_num, proj_id, proj_path, proj_url, base_file_id, file_tokens_file, file_stats_file):
     zip_time = file_time = string_time = tokens_time = hash_time = write_time = regex_time = 0
     with zipfile.ZipFile(proj_path, 'r') as my_file:
@@ -357,7 +311,7 @@ def process_zip_ball(process_num, proj_id, proj_path, proj_url, base_file_id, fi
             try:
                 my_zip_file = my_file.open(file.filename, 'r')
             except Exception as e:
-                print("[WARNING] Unable to open file (1) <{}> (process {})".format(os.path.join(proj_path, file), process_num))
+                print(f"[WARNING] Unable to open file (1) <{proj_path}/{file}> (process {process_num})")
                 print(e)
                 continue
             zip_time += (dt.datetime.now() - z_time).microseconds
@@ -367,7 +321,7 @@ def process_zip_ball(process_num, proj_id, proj_path, proj_url, base_file_id, fi
                 continue
 
             f_time = dt.datetime.now()
-            file_string = my_zip_file.read().decode("utf-8", 'ignore')
+            file_string = my_zip_file.read().decode("utf-8")
             file_time += (dt.datetime.now() - f_time).microseconds
 
             file_id = process_num * MULTIPLIER + base_file_id + file_count
@@ -423,9 +377,7 @@ def process_projects(process_num, list_projects, base_file_id, global_queue, pro
 
     global file_count
     file_count = 0
-    with open(file_files_tokens_file, 'a+') as tokens_file, \
-            open(file_bookkeeping_proj_name, 'a+') as bookkeeping_file, \
-            open(file_files_stats_file, 'a+') as stats_file:
+    with open(file_files_tokens_file, 'a+', encoding="utf-8") as tokens_file, open(file_bookkeeping_proj_name, 'a+', encoding="utf-8") as bookkeeping_file, open(file_files_stats_file, 'a+', encoding="utf-8") as stats_file:
         print("[INFO] Process {} starting".format(process_num))
         p_start = dt.datetime.now()
         for proj_id, proj_path in list_projects:
@@ -486,7 +438,7 @@ if __name__ == '__main__':
 
     prio_proj_paths = []
     if FILE_priority_projects is not None:
-        with open(FILE_priority_projects) as f:
+        with open(FILE_priority_projects, "r", encoding="utf-8") as f:
             for line in f:
                 line_split = line[:-1].split(',')  # [:-1] to strip final character which is '\n'
                 prio_proj_paths.append((line_split[0], line_split[4]))
@@ -494,7 +446,7 @@ if __name__ == '__main__':
 
     proj_paths = []
 
-    with open(FILE_projects_list) as f:
+    with open(FILE_projects_list, "r", encoding="utf-8") as f:
         for line in f:
             proj_paths.append(line.strip("\n"))
     proj_paths = list(zip(range(1, len(proj_paths) + 1), proj_paths))

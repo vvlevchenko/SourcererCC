@@ -13,7 +13,7 @@ def get_file_name(file_path):
 
 
 def get_file_lines(filename):
-    with open(filename, "r") as file_descr:
+    with open(filename, "r", encoding="utf-8") as file_descr:
         for line in file_descr:
             yield line.strip("\n")
 
@@ -179,7 +179,9 @@ def print_tokens(tokens_files, blocks_mode):
         stat_lines = ["{}: {}".format(k, v) for k, v in stat.items() if k != "tokens_list"]
         print("        " + "\n        ".join(stat_lines))
         print("        tokens_list: ")
-        tokens_lines = ["{}: {}".format(k, v) for k, v in stat["tokens_list"].items()]
+        tokens_lines = [f"{k}: {v}" for k, v in stat["tokens_list"].items()]
+        for line in tokens_lines:
+            print(str(line))
         print("            " + "\n            ".join(tokens_lines))
 
 
@@ -216,7 +218,7 @@ if __name__ == "__main__":
     elif options.bookkeeping_files:
         print_projects_list(options.bookkeeping_files)
     elif options.tokens_files:
-        print_tokens(options.token_files, options.blocks_mode)
+        print_tokens(options.tokens_files, options.blocks_mode)
     elif options.stats_files:
         print_stats(options.stats_files, options.blocks_mode)
 
