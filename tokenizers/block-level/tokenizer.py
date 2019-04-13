@@ -253,6 +253,7 @@ def process_file_contents(file_string, proj_id, file_id, container_path, file_pa
     except Exception as e:
         print("[WARNING] Error on step3 of process_file_contents")
         print(e)
+    print(f"[INFO] Successfully ran process_file_contents {os.path.join(container_path, file_path}")
     return file_parsing_times + [w_time]  # [s_time, t_time, w_time, hash_time, re_time]
 
 
@@ -320,9 +321,12 @@ def process_zip_ball(process_num, proj_id, proj_path, proj_url, base_file_id, fi
                 print("[WARNING] Unable to open file (2) <{}> (process {})".format(os.path.join(proj_path, file), process_num))
                 continue
 
-            f_time = dt.datetime.now()
-            file_string = my_zip_file.read().decode("utf-8")
-            file_time += (dt.datetime.now() - f_time).microseconds
+            try:
+                f_time = dt.datetime.now()
+                file_string = my_zip_file.read().decode("utf-8")
+                file_time += (dt.datetime.now() - f_time).microseconds
+            except:
+                print(f"filename: {file.filename}")
 
             file_id = process_num * MULTIPLIER + base_file_id + file_count
             file_path = file.filename
