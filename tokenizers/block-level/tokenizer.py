@@ -253,7 +253,7 @@ def process_file_contents(file_string, proj_id, file_id, container_path, file_pa
     except Exception as e:
         print("[WARNING] Error on step3 of process_file_contents")
         print(e)
-    print(f"[INFO] Successfully ran process_file_contents {os.path.join(container_path, file_path}")
+    print(f"[INFO] Successfully ran process_file_contents {os.path.join(container_path, file_path)}")
     return file_parsing_times + [w_time]  # [s_time, t_time, w_time, hash_time, re_time]
 
 
