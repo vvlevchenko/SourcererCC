@@ -180,8 +180,6 @@ def print_tokens(tokens_files, blocks_mode):
         print("        " + "\n        ".join(stat_lines))
         print("        tokens_list: ")
         tokens_lines = [f"{k}: {v}" for k, v in stat["tokens_list"].items()]
-        for line in tokens_lines:
-            print(str(line))
         print("            " + "\n            ".join(tokens_lines))
 
 
