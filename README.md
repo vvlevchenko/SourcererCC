@@ -8,19 +8,7 @@
 Write urls of repositories you want to analyze in **urls.txt**. Then execute:
 
 ```bash
-# for file-level analysis
-./downloadRepos.py urls.txt "tokenizers/file-level/tokenizer-sample-input"
-./runSourcererCC-FilesMode.sh
-# or
-# for block-level analysis
-./downloadRepos.py urls.txt "tokenizers/block-level/tokenizer-sample-input"
-./runSourcererCC-BlocksMode.sh
-```
-
-Get results in results.pairs:
-
-```bash
-cat results.pairs
+./run.py
 ```
 
 ## Old README
