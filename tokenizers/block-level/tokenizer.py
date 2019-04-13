@@ -41,10 +41,10 @@ def hash_measuring_time(string):
     start_time = dt.datetime.now()
     m = hashlib.md5()
     m.update(string.encode("utf-8"))
-    hash = m.hexdigest()
+    hash_value = m.hexdigest()
     end_time = dt.datetime.now()
     time = (end_time - start_time).microseconds
-    return hash, time
+    return hash_value, time
 
 
 def read_config():
