@@ -13,7 +13,7 @@ def get_file_name(file_path):
 
 
 def get_file_lines(filename):
-    with open(filename, "r") as file_descr:
+    with open(filename, "r", encoding="utf-8") as file_descr:
         for line in file_descr:
             yield line.strip("\n")
 
@@ -48,8 +48,7 @@ def get_projects_info(bookkeeping_files_path):
         for line in get_file_lines(bookkeeping_file):
             project_info = {
                 "project_id": line.split(",")[0],
-                "project_path": line.split(",")[1],
-                "project_url": line.split(",")[2]
+                "project_path": line.split(",")[1]
             }
             projects_info.append(project_info)
     return projects_info
@@ -88,12 +87,11 @@ def get_stats_info(stats_files_path, blocks_mode):
         return {
             "project_id": line_parts[0],
             "file_path": line_parts[2],
-            "file_url": line_parts[3],
-            "file_hash": line_parts[4],
-            "file_size": line_parts[5],
-            "lines": line_parts[6],
-            "LOC": line_parts[7],
-            "SLOC": line_parts[8]
+            "file_hash": line_parts[3],
+            "file_size": line_parts[4],
+            "lines": line_parts[5],
+            "LOC": line_parts[6],
+            "SLOC": line_parts[7]
         }
     def parse_block_line(line_parts):
         return {
@@ -181,7 +179,7 @@ def print_tokens(tokens_files, blocks_mode):
         stat_lines = ["{}: {}".format(k, v) for k, v in stat.items() if k != "tokens_list"]
         print("        " + "\n        ".join(stat_lines))
         print("        tokens_list: ")
-        tokens_lines = ["{}: {}".format(k, v) for k, v in stat["tokens_list"].items()]
+        tokens_lines = [f"{k}: {v}" for k, v in stat["tokens_list"].items()]
         print("            " + "\n            ".join(tokens_lines))
 
 
@@ -218,7 +216,7 @@ if __name__ == "__main__":
     elif options.bookkeeping_files:
         print_projects_list(options.bookkeeping_files)
     elif options.tokens_files:
-        print_tokens(options.token_files, options.blocks_mode)
+        print_tokens(options.tokens_files, options.blocks_mode)
     elif options.stats_files:
         print_stats(options.stats_files, options.blocks_mode)
 

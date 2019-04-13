@@ -92,13 +92,13 @@ class ScriptController(object):
 
     def flush_state(self):
         print("flushing current state {}".format(self.current_state))
-        with open(self.script_meta_file_name, "w") as f:
+        with open(self.script_meta_file_name, "w", encoding="utf-8") as f:
             f.write("{}\n".format(self.current_state))
 
     def load_previous_state(self):
         print("loading previous run state")
         if os.path.isfile(self.script_meta_file_name):
-            with open(self.script_meta_file_name, "r") as f:
+            with open(self.script_meta_file_name, "r", encoding="utf-8") as f:
                 return int(f.readline())
         else:
             print("{} doesn't exist, creating one with state EXECUTE_1".format(self.script_meta_file_name))
