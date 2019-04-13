@@ -366,8 +366,8 @@ def process_one_project(process_num, proj_id, proj_path, base_file_id, file_toke
     print("[INFO] " + '     Separators: {} ms'.format(string_time))
     print("[INFO] " + '     Tokens: {} ms'.format(tokens_time))
     print("[INFO] " + '     Write: {} ms'.format(write_time))
-    print("[INFO] " + '     Hash: {}'.format(hash_time))
-    print("[INFO] " + '     regex: {}'.format(regex_time))
+    print("[INFO] " + '     Hash: {} ms'.format(hash_time))
+    print("[INFO] " + '     regex: {} ms'.format(regex_time))
 
 
 def process_projects(process_num, list_projects, base_file_id, global_queue, project_format):

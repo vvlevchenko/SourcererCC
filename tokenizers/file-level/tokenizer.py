@@ -226,13 +226,13 @@ def process_one_project(process_num, proj_id, proj_path, base_file_id, FILE_toke
     p_elapsed = dt.datetime.now() - p_start
     print(f"[INFO] Project finished <{proj_id},{proj_path}> (process {process_num}))")
     print(f"[INFO]  ({process_num}): Total: {p_elapsed} ms")
-    print(f"[INFO]      Zip: {zip_time}")
-    print(f"[INFO]      Read: {file_time}")
+    print(f"[INFO]      Zip: {zip_time} ms")
+    print(f"[INFO]      Read: {file_time} ms")
     print(f"[INFO]      Separators: {string_time} ms")
     print(f"[INFO]      Tokens: {tokens_time} ms")
     print(f"[INFO]      Write: {write_time} ms")
-    print(f"[INFO]      Hash: {hash_time}")
-    print(f"[INFO]      regex: {regex_time}")
+    print(f"[INFO]      Hash: {hash_time} ms")
+    print(f"[INFO]      regex: {regex_time} ms")
 
 
 def process_projects(process_num, list_projects, base_file_id, global_queue):
