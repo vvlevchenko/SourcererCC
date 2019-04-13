@@ -7,7 +7,6 @@ import io
 import os
 import re
 import sys
-import tarfile
 import zipfile
 from configparser import ConfigParser
 from multiprocessing import Process, Queue

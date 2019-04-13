@@ -48,7 +48,7 @@ def getFunctions(filestring, file_path, separators, comment_inline_pattern):
         for t in node.parameters:
             dims = []
             if len(t.type.dimensions) > 0:
-                for e in t.type.dimensions:
+                for _ in t.type.dimensions:
                     dims.append("[]")
             dims = "".join(dims)
             args.append(t.type.name + dims)
