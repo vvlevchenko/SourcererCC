@@ -71,13 +71,13 @@ def run_block_mode():
         for out_file in glob.glob(get_full_path("tokenizers/block-level/blocks_tokens/*")):
             with open(out_file, "r", encoding="utf-8") as out_file_descr:
                 blocks_file.writelines(out_file_descr.readlines())
-    #run_algo()
+    run_algo()
     stats_file_path = get_full_path("tokenizers/block-level/file_block_stats/")
     prettify_script_path = get_full_path("prettify_results.py")
     results_file_path = get_full_path("results.pairs")
     run([prettify_script_path, "--blocks-mode", "-r", results_file_path, "-s", stats_file_path])
 
-    #clear_block_mode_tokenizer_files()
+    clear_block_mode_tokenizer_files()
     clear_clone_detector_files()
 
 
@@ -88,14 +88,14 @@ def run_file_mode():
         for out_file in glob.glob(get_full_path("tokenizers/file-level/files_tokens/*")):
             with open(out_file, "r", encoding="utf-8") as out_file_descr:
                 blocks_file.writelines(out_file_descr.readlines())
-    #run_algo()
+    run_algo()
     stats_file_path = get_full_path("tokenizers/file-level/files_stats/")
     prettify_script_path = get_full_path("prettify_results.py")
     results_file_path = get_full_path("results.pairs")
     run([prettify_script_path, "-r", results_file_path, "-s", stats_file_path])
 
     clear_file_mode_tokenizer_files()
-    #clear_clone_detector_files()
+    clear_clone_detector_files()
 
 
 if __name__ == "__main__":
