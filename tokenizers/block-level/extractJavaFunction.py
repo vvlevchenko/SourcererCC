@@ -1,6 +1,5 @@
 import re
 import javalang
-import traceback
 import itertools
 
 global found_parent
@@ -25,7 +24,7 @@ def getFunctions(filestring, file_path, separators, comment_inline_pattern):
             package = 'JHawkDefaultPackage'
         else:
             package = package.name
-    except Exception as e:
+    except:
         print(f"[WARNING] File {file_path} possibly contains syntax error and therefore won't be parsed")
         return None, None, []
 
