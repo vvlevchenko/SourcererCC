@@ -26,8 +26,7 @@ def getFunctions(filestring, file_path, separators, comment_inline_pattern):
         else:
             package = package.name
     except Exception as e:
-        print("[WARNING] " + "File " + file_path + " cannot be parsed. (1)" + str(e))
-        print("[WARNING] " + 'Traceback:' + traceback.print_exc())
+        print(f"[WARNING] File {file_path} possibly contains syntax error and therefore won't be parsed")
         return None, None, []
 
     file_string_split = filestring.split('\n')
@@ -86,7 +85,7 @@ def getFunctions(filestring, file_path, separators, comment_inline_pattern):
         method_name.append(fqn)
 
     if len(method_pos) != len(method_string):
-        print("[WARNING] " + "File " + file_path + " cannot be parsed. (3)")
+        print(f"[WARNING] File {file_path} cannot be parsed due to Java Syntax error")
         return None, None, method_name
     else:
         return method_pos, method_string, method_name
