@@ -210,6 +210,7 @@ def tokenize_blocks(file_string, comment_inline_pattern, comment_open_close_patt
 
 
 def process_file_contents(file_string, proj_id, file_id, container_path, file_path, file_bytes, proj_url, file_tokens_file, file_stats_file):
+    print(f"[INFO] Started process_file_contents on {file_path}")
     global file_count
     file_count += 1
 
@@ -425,6 +426,8 @@ def active_process_count(processes):
 
 
 if __name__ == '__main__':
+    # Need to bypass javalang syntax tree traverse limits
+    sys.setrecursionlimit(3000)
     if len(sys.argv) < 2:
         print("Usage: {} [MODE]".format(sys.argv[0]))
         print("Where MODE is zipblocks or folderblocks")
