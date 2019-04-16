@@ -219,8 +219,6 @@ def process_file_contents(file_string, proj_id, file_id, container_path, file_pa
     global file_count
     file_count += 1
 
-    if not project_format in ['zipblocks', 'folderblocks']:
-        return [0] * 5
     print(f"[INFO] Started tokenizing blocks on {file_path}")
     (final_stats, blocks_data, file_parsing_times) = tokenize_blocks(file_string, comment_inline_pattern, comment_open_close_pattern, separators, os.path.join(container_path, file_path))
     print(f"[INFO] Ended tokenizing blocks on {file_path}")
@@ -355,21 +353,15 @@ def process_zip_ball(process_num, proj_id, proj_path, proj_url, base_file_id, fi
     return zip_time, file_time, string_time, tokens_time, write_time, hash_time, regex_time
 
 
-def process_one_project(process_num, proj_id, proj_path, base_file_id, file_tokens_file, file_bookkeeping_proj, file_stats_file, project_format):
+def process_one_project(process_num, proj_id, proj_path, base_file_id, file_tokens_file, file_bookkeeping_proj, file_stats_file):
     p_start = dt.datetime.now()
 
     proj_url = 'NULL'
     proj_id = str(proj_id_flag) + proj_id
-    if project_format == 'zipblocks':
-        if not os.path.isfile(proj_path):
-            print("[WARNING] " + 'Unable to open project <' + proj_id + ',' + proj_path + '> (process ' + str(process_num) + ')')
-            return
-        times = process_zip_ball(process_num, proj_id, proj_path, proj_url, base_file_id, file_tokens_file, file_stats_file)
-    elif project_format == 'folderblocks':
-        if not os.path.exists(proj_path):
-            print("[WARNING] " + 'Unable to open project <' + proj_id + ',' + proj_path + '> (process ' + str(process_num) + ')')
-            return
-        times = process_regular_folder(process_num, proj_id, proj_path, proj_url, base_file_id, file_tokens_file, file_stats_file)
+    if not os.path.isfile(proj_path):
+        print("[WARNING] " + 'Unable to open project <' + proj_id + ',' + proj_path + '> (process ' + str(process_num) + ')')
+        return
+    times = process_zip_ball(process_num, proj_id, proj_path, proj_url, base_file_id, file_tokens_file, file_stats_file)
     if times is None:
         times = (-1, -1, -1, -1, -1, -1, -1)
     zip_time, file_time, string_time, tokens_time, write_time, hash_time, regex_time = times
@@ -387,7 +379,7 @@ def process_one_project(process_num, proj_id, proj_path, base_file_id, file_toke
     print("[INFO] " + '     regex: {} ms'.format(regex_time))
 
 
-def process_projects(process_num, list_projects, base_file_id, global_queue, project_format):
+def process_projects(process_num, list_projects, base_file_id, global_queue):
     file_files_tokens_file = os.path.join(PATH_tokens_file_folder, 'files-tokens-{}.tokens'.format(process_num))
     file_bookkeeping_proj_name = os.path.join(PATH_bookkeeping_proj_folder, 'bookkeeping-proj-{}.projs'.format(process_num))
     file_files_stats_file = os.path.join(PATH_stats_file_folder, 'files-stats-{}.stats'.format(process_num))
@@ -398,7 +390,7 @@ def process_projects(process_num, list_projects, base_file_id, global_queue, pro
     with open(file_files_tokens_file, 'a+', encoding="utf-8") as tokens_file, open(file_bookkeeping_proj_name, 'a+', encoding="utf-8") as bookkeeping_file, open(file_files_stats_file, 'a+', encoding="utf-8") as stats_file:
         p_start = dt.datetime.now()
         for proj_id, proj_path in list_projects:
-            process_one_project(process_num, str(proj_id), proj_path, base_file_id, tokens_file, bookkeeping_file, stats_file, project_format)
+            process_one_project(process_num, str(proj_id), proj_path, base_file_id, tokens_file, bookkeeping_file, stats_file)
 
     p_elapsed = (dt.datetime.now() - p_start).seconds
     print("[INFO] " + 'Process {} finished. {} files in {} s'.format(process_num, file_count, p_elapsed))
@@ -408,7 +400,7 @@ def process_projects(process_num, list_projects, base_file_id, global_queue, pro
     sys.exit(0)
 
 
-def start_child(processes, global_queue, proj_paths, batch, project_format):
+def start_child(processes, global_queue, proj_paths, batch):
     # This is a blocking get. If the queue is empty, it waits
     pid, n_files_processed = global_queue.get()
     # OK, one of the processes finished. Let's get its data and kill it
@@ -419,7 +411,7 @@ def start_child(processes, global_queue, proj_paths, batch, project_format):
     del proj_paths[:batch]
 
     print("Starting new process {}".format(pid))
-    p = Process(name='Process ' + str(pid), target=process_projects, args=(pid, paths_batch, processes[pid][1], global_queue, project_format))
+    p = Process(name='Process ' + str(pid), target=process_projects, args=(pid, paths_batch, processes[pid][1], global_queue))
     processes[pid][0] = p
     p.start()
 
@@ -440,17 +432,6 @@ def active_process_count(processes):
 if __name__ == '__main__':
     # Need to bypass javalang syntax tree traverse limits
     sys.setrecursionlimit(3000)
-    if len(sys.argv) < 2:
-        print("Usage: {} [MODE]".format(sys.argv[0]))
-        print("Where MODE is zipblocks or folderblocks")
-        exit(0)
-
-    global project_format
-    project_format = sys.argv[1]
-
-    if project_format not in ['zipblocks', 'folderblocks']:
-        print("MODE must be zipblocks or folderblocks")
-        sys.exit()
 
     read_config()
     p_start = dt.datetime.now()
@@ -488,7 +469,7 @@ if __name__ == '__main__':
     # Start all other projects
     print("*** Starting regular projects...")
     while len(proj_paths) > 0:
-        start_child(processes, global_queue, proj_paths, PROJECTS_BATCH, project_format)
+        start_child(processes, global_queue, proj_paths, PROJECTS_BATCH)
 
     print("*** No more projects to process. Waiting for children to finish...")
     while active_process_count(processes) > 0:
