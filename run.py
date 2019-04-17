@@ -2,6 +2,7 @@
 
 from subprocess import run
 import os
+import sys
 import shutil
 import glob
 
@@ -65,6 +66,12 @@ def run_algo():
 
 
 def run_block_mode():
+    download_script_path = get_full_path("downloadRepos.py")
+    urls_list_path = get_full_path("urls.txt")
+    input_dir_path = get_full_path("tokenizers/block-level/tokenizer-sample-input")
+    projects_list_path = get_full_path("tokenizers/block-level/project-list.txt")
+    with open(projects_list_path, "w", encoding="utf-8") as out_file:
+        run([download_script_path, urls_list_path, input_dir_path], stdout=out_file)
     os.makedirs(get_full_path("clone-detector/input/dataset"))
     run([get_full_path("tokenizers/block-level/tokenizer.py"), "zipblocks"], cwd=get_full_path("tokenizers/block-level/"))
     with open(get_full_path("clone-detector/input/dataset/blocks.file"), "w", encoding="utf-8") as blocks_file:
@@ -72,16 +79,35 @@ def run_block_mode():
             with open(out_file, "r", encoding="utf-8") as out_file_descr:
                 blocks_file.writelines(out_file_descr.readlines())
     run_algo()
-    stats_file_path = get_full_path("tokenizers/block-level/file_block_stats/")
     prettify_script_path = get_full_path("prettify_results.py")
+    stats_file_path = get_full_path("tokenizers/block-level/file_block_stats/")
+    print("RESULTS")
+    sys.stdout.flush()
     results_file_path = get_full_path("results.pairs")
     run([prettify_script_path, "--blocks-mode", "-r", results_file_path, "-s", stats_file_path])
+    print("STATS")
+    sys.stdout.flush()
+    run([prettify_script_path, "--blocks-mode", "-s", stats_file_path])
+    print("TOKENS")
+    sys.stdout.flush()
+    tokens_file_path = get_full_path("tokenizers/block-level/blocks_tokens/")
+    run([prettify_script_path, "--blocks-mode", "-t", tokens_file_path])
+    print("BOOKKEEPING")
+    sys.stdout.flush()
+    bookkeeping_file_path = get_full_path("tokenizers/block-level/bookkeeping_projs/")
+    run([prettify_script_path, "--blocks-mode", "-b", bookkeeping_file_path])
 
     clear_block_mode_tokenizer_files()
     clear_clone_detector_files()
 
 
 def run_file_mode():
+    download_script_path = get_full_path("downloadRepos.py")
+    urls_list_path = get_full_path("urls.txt")
+    input_dir_path = get_full_path("tokenizers/file-level/tokenizer-sample-input")
+    projects_list_path = get_full_path("tokenizers/file-level/project-list.txt")
+    with open(projects_list_path, "w", encoding="utf-8") as out_file:
+        run([download_script_path, urls_list_path, input_dir_path], stdout=out_file)
     os.makedirs(get_full_path("clone-detector/input/dataset"))
     run([get_full_path("tokenizers/file-level/tokenizer.py"), "zip"], cwd=get_full_path("tokenizers/file-level/"))
     with open(get_full_path("clone-detector/input/dataset/blocks.file"), "w", encoding="utf-8") as blocks_file:
@@ -89,26 +115,28 @@ def run_file_mode():
             with open(out_file, "r", encoding="utf-8") as out_file_descr:
                 blocks_file.writelines(out_file_descr.readlines())
     run_algo()
-    stats_file_path = get_full_path("tokenizers/file-level/files_stats/")
     prettify_script_path = get_full_path("prettify_results.py")
+    stats_file_path = get_full_path("tokenizers/file-level/files_stats/")
+    print("RESULTS")
+    sys.stdout.flush()
     results_file_path = get_full_path("results.pairs")
     run([prettify_script_path, "-r", results_file_path, "-s", stats_file_path])
+    print("STATS")
+    sys.stdout.flush()
+    run([prettify_script_path, "-s", stats_file_path])
+    print("TOKENS")
+    sys.stdout.flush()
+    tokens_file_path = get_full_path("tokenizers/file-level/files_tokens/")
+    run([prettify_script_path, "-t", tokens_file_path])
+    print("BOOKKEEPING")
+    sys.stdout.flush()
+    bookkeeping_file_path = get_full_path("tokenizers/file-level/bookkeeping_projs/")
+    run([prettify_script_path, "-b", bookkeeping_file_path])
 
     clear_file_mode_tokenizer_files()
     clear_clone_detector_files()
 
 
 if __name__ == "__main__":
-    download_script_path = get_full_path("downloadRepos.py")
-    urls_list_path = get_full_path("urls.txt")
-    file_mode_input_dir_path = get_full_path("tokenizers/file-level/tokenizer-sample-input")
-    file_mode_projects_list_path = get_full_path("tokenizers/file-level/project-list.txt")
-    block_mode_input_dir_path = get_full_path("tokenizers/block-level/tokenizer-sample-input")
-    block_mode_projects_list_path = get_full_path("tokenizers/block-level/project-list.txt")
-    with open(file_mode_projects_list_path, "w", encoding="utf-8") as out_file:
-        run([download_script_path, urls_list_path, file_mode_input_dir_path], stdout=out_file)
-    with open(block_mode_projects_list_path, "w", encoding="utf-8") as out_file:
-        run([download_script_path, urls_list_path, block_mode_input_dir_path], stdout=out_file)
-
     run_block_mode()
     run_file_mode()
