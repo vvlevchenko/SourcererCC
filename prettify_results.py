@@ -54,81 +54,6 @@ def get_projects_info(bookkeeping_files_path):
     return projects_info
 
 
-def get_tokens_info(tokens_files_path, blocks_mode):
-    files = filter_files(tokens_files_path, ".tokens")
-    tokens_info = {}
-    for tokens_file in files:
-        for line in get_file_lines(tokens_file):
-            (info_line, tokens_list) = line.split("@#@")
-            code_id = info_line.split(",")[1]
-            file_info = {
-                "project_id": info_line.split(",")[0],
-                "total_tokens": info_line.split(",")[2],
-                "unique_tokens": info_line.split(",")[3],
-                "tokens_list": {k: v for k, v in map(lambda x: x.split("@@::@@"), tokens_list.split(","))}
-            }
-            if blocks_mode:
-                file_info.update({
-                    "relative_id": code_id[:5],
-                    "file_id": code_id[5:],
-                    "experimental": info_line.split(",")[4],
-                    "tokens_hash": info_line.split(",")[5]
-                })
-            else:
-                file_info.update({
-                    "tokens_hash": info_line.split(",")[4]
-                })
-            tokens_info[code_id] = file_info
-    return tokens_info
-
-
-def get_stats_info(stats_files_path, blocks_mode):
-    def parse_file_line(line_parts):
-        return {
-            "project_id": line_parts[0],
-            "file_path": line_parts[2],
-            "file_hash": line_parts[3],
-            "file_size": line_parts[4],
-            "lines": line_parts[5],
-            "LOC": line_parts[6],
-            "SLOC": line_parts[7]
-        }
-    def parse_block_line(line_parts):
-        return {
-            "project_id": line_parts[0],
-            "block_hash": line_parts[2],
-            "block_lines": line_parts[3],
-            "block_LOC": line_parts[4],
-            "block_SLOC": line_parts[5],
-            "start_line": int(line_parts[6]),
-            "end_line": int(line_parts[7])
-        }
-    files = filter_files(stats_files_path, ".stats")
-    stats_info = {}
-    for stats_file in files:
-        for line in get_file_lines(stats_file):
-            line_parts = line.split(",")
-            stats = {}
-            if blocks_mode:
-                code_type = line_parts[0]
-                code_id = line_parts[2]
-                if code_type == "f":
-                    stats = parse_file_line(line_parts[1:])
-                elif code_type == "b":
-                    stats = parse_block_line(line_parts[1:])
-                    stats["relative_id"] = code_id[:5]
-                    stats["file_id"] = code_id[5:]
-            else:
-                code_id = line_parts[1]
-                stats = parse_file_line(line_parts)
-            if code_id in stats_info:
-                print("[NOTIFY] intersection on id {}".format(code_id))
-                print("old: {}".format(stats_info[code_id]))
-                print("new: {}".format(stats))
-            stats_info[code_id] = stats
-    return stats_info
-
-
 def get_results(results_file):
     results_pairs = []
     for line in get_file_lines(results_file):
@@ -171,33 +96,10 @@ def print_projects_list(bookkeeping_files):
         print()
 
 
-def print_tokens(tokens_files, blocks_mode):
-    tokens_info = get_tokens_info(tokens_files, blocks_mode)
-    print("Files/tokens info list:")
-    for code_id, stat in tokens_info.items():
-        print("    {}:".format(code_id))
-        stat_lines = ["{}: {}".format(k, v) for k, v in stat.items() if k != "tokens_list"]
-        print("        " + "\n        ".join(stat_lines))
-        print("        tokens_list: ")
-        tokens_lines = [f"{k}: {v}" for k, v in stat["tokens_list"].items()]
-        print("            " + "\n            ".join(tokens_lines))
-
-
-def print_stats(stats_file, blocks_mode):
-    stats_info = get_stats_info(options.stats_files, options.blocks_mode)
-    print("Stats list:")
-    for code_id, stat in stats_info.items():
-        print("    {}:".format(code_id))
-        stat_lines = ["{}: {}".format(k, v) for k, v in stat.items()]
-        print("        " + "\n        ".join(stat_lines))
-
-
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--blocks-mode", dest="blocks_mode", nargs="?", const=True, default=False, help="Specify if files produced in blocks-mode")
     parser.add_argument("-b", "--bookkeepingFiles", dest="bookkeeping_files", default=False, help="File or folder with bookkeeping files (*.projs).")
-    parser.add_argument("-t", "--tokensFiles", dest="tokens_files", default=False, help="File or folder with tokens files (*.tokens).")
-    parser.add_argument("-s", "--statsFiles", dest="stats_files", default=False, help="File or folder with stats files (*.stats).")
     parser.add_argument("-r", "--resultsFile", dest="results_file", default=False, help="File with results of SourcererCC (results.pairs).")
 
     options = parser.parse_args(sys.argv[1:])
@@ -215,9 +117,5 @@ if __name__ == "__main__":
         print_results(options.results_file, options.stats_files, options.blocks_mode)
     elif options.bookkeeping_files:
         print_projects_list(options.bookkeeping_files)
-    elif options.tokens_files:
-        print_tokens(options.tokens_files, options.blocks_mode)
-    elif options.stats_files:
-        print_stats(options.stats_files, options.blocks_mode)
 
     print("Processed in {}".format(dt.datetime.now() - p_start))
