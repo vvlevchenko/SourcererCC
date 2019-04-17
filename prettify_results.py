@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 import sys
 import os
 import re
+import json
 
 
 def get_file_name(file_path):
@@ -54,6 +55,53 @@ def get_projects_info(bookkeeping_files_path):
     return projects_info
 
 
+def get_stats_info(stats_files_path, blocks_mode):
+    def parse_file_line(line_parts):
+        return {
+            "project_id": line_parts[0],
+            "file_path": line_parts[2],
+            "file_hash": line_parts[3],
+            "file_size": line_parts[4],
+            "lines": line_parts[5],
+            "LOC": line_parts[6],
+            "SLOC": line_parts[7]
+        }
+    def parse_block_line(line_parts):
+        return {
+            "project_id": line_parts[0],
+            "block_hash": line_parts[2],
+            "block_lines": line_parts[3],
+            "block_LOC": line_parts[4],
+            "block_SLOC": line_parts[5],
+            "start_line": int(line_parts[6]),
+            "end_line": int(line_parts[7])
+        }
+    files = filter_files(stats_files_path, ".stats")
+    stats_info = {}
+    for stats_file in files:
+        for line in get_file_lines(stats_file):
+            line_parts = line.split(",")
+            stats = {}
+            if blocks_mode:
+                code_type = line_parts[0]
+                code_id = line_parts[2]
+                if code_type == "f":
+                    stats = parse_file_line(line_parts[1:])
+                elif code_type == "b":
+                    stats = parse_block_line(line_parts[1:])
+                    stats["relative_id"] = code_id[:5]
+                    stats["file_id"] = code_id[5:]
+            else:
+                code_id = line_parts[1]
+                stats = parse_file_line(line_parts)
+            if code_id in stats_info:
+                print("[NOTIFY] intersection on id {}".format(code_id))
+                print("old: {}".format(stats_info[code_id]))
+                print("new: {}".format(stats))
+            stats_info[code_id] = stats
+    return stats_info
+
+
 def get_results(results_file):
     results_pairs = []
     for line in get_file_lines(results_file):
@@ -67,6 +115,7 @@ def get_results(results_file):
 def print_results(results_file, stats_files, blocks_mode):
     stats = get_stats_info(stats_files, blocks_mode)
     results = get_results(results_file)
+    full_results = {}
     formatted_titles = {}
     if blocks_mode:
         for code_id in stats.keys():
@@ -74,26 +123,30 @@ def print_results(results_file, stats_files, blocks_mode):
                 filename = get_file_name(stats[stats[code_id]["file_id"]]["file_path"])
                 start_line = stats[code_id]["start_line"]
                 end_line = stats[code_id]["end_line"]
-                total_lines = end_line - start_line + 1
-                formatted_titles[code_id] = f"{filename}(lines {start_line}-{end_line}, total {total_lines})"
+                formatted_titles[code_id] = {
+                    "file": filename,
+                    "start_line": start_line,
+                    "end_line": end_line
+                }
     else:
-        formatted_titles = {
-            code_id: "{}({} SLOC)".format(get_file_name(stats[code_id]["file_path"]), stats[code_id]["SLOC"]) for code_id in stats.keys()
-        }
-    print("Results list:")
+        for code_id in stats.keys():
+            formatted_titles[code_id] = {
+                "file": get_file_name(stats[code_id]["file_path"]),
+                "SLOC": stats[code_id]["SLOC"]
+            }
     for code_id, code_id_list in results.items():
-        print("{} is similar to:".format(formatted_titles[code_id]))
-        print("    " + "\n    ".join(map(lambda x: formatted_titles[x], code_id_list)))
-        print()
+        full_results[formatted_titles[code_id]["file"]] = {
+            "clones": list(map(lambda x: formatted_titles[x], code_id_list))
+        }
+        if blocks_mode:
+            full_results[formatted_titles[code_id]["file"]]["start_line"] = formatted_titles[code_id]["start_line"]
+            full_results[formatted_titles[code_id]["file"]]["end_line"] = formatted_titles[code_id]["end_line"]
+    print(json.dumps(full_results, indent=4))
 
 
 def print_projects_list(bookkeeping_files):
     projects_info = get_projects_info(bookkeeping_files)
-    print("Projects list:")
-    for project in projects_info:
-        project_lines = ["{}: {}".format(k, v) for k, v in project.items()]
-        print("    " + "\n    ".join(project_lines))
-        print()
+    print(json.dumps(projects_info, indent=4))
 
 
 if __name__ == "__main__":
@@ -101,6 +154,7 @@ if __name__ == "__main__":
     parser.add_argument("--blocks-mode", dest="blocks_mode", nargs="?", const=True, default=False, help="Specify if files produced in blocks-mode")
     parser.add_argument("-b", "--bookkeepingFiles", dest="bookkeeping_files", default=False, help="File or folder with bookkeeping files (*.projs).")
     parser.add_argument("-r", "--resultsFile", dest="results_file", default=False, help="File with results of SourcererCC (results.pairs).")
+    parser.add_argument("-s", "--statsFiles", dest="stats_files", default=False, help="File or folder with stats files (*.stats).")
 
     options = parser.parse_args(sys.argv[1:])
 
