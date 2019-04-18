@@ -18,8 +18,6 @@ MULTIPLIER = 50000000
 
 N_PROCESSES = 2
 PROJECTS_BATCH = 20
-FILE_projects_list = 'project-list.txt'
-FILE_priority_projects = None
 PATH_stats_file_folder = 'files_stats'
 PATH_bookkeeping_proj_folder = 'bookkeeping_projs'
 PATH_tokens_file_folder = 'files_tokens'
@@ -48,7 +46,7 @@ def hash_measuring_time(string):
 
 def read_config():
     print("[INFO] Reading config")
-    global N_PROCESSES, PROJECTS_BATCH, FILE_projects_list, FILE_priority_projects
+    global N_PROCESSES, PROJECTS_BATCH
     global PATH_stats_file_folder, PATH_bookkeeping_proj_folder, PATH_tokens_file_folder
     global separators, comment_inline, comment_inline_pattern, comment_open_tag, comment_close_tag, comment_open_close_pattern
     global file_extensions
@@ -69,9 +67,6 @@ def read_config():
     # Get info from config.ini into global variables
     N_PROCESSES = config.getint('Main', 'N_PROCESSES')
     PROJECTS_BATCH = config.getint('Main', 'PROJECTS_BATCH')
-    FILE_projects_list = config.get('Main', 'FILE_projects_list')
-    if config.has_option('Main', 'FILE_priority_projects'):
-        FILE_priority_projects = config.get('Main', 'FILE_priority_projects')
     PATH_stats_file_folder = config.get('Folders/Files', 'PATH_stats_file_folder')
     PATH_bookkeeping_proj_folder = config.get('Folders/Files', 'PATH_bookkeeping_proj_folder')
     PATH_tokens_file_folder = config.get('Folders/Files', 'PATH_tokens_file_folder')
@@ -436,12 +431,8 @@ if __name__ == '__main__':
     read_config()
     p_start = dt.datetime.now()
 
-    proj_paths = []
-
-    with open(FILE_projects_list, "r", encoding="utf-8") as f:
-        for line in f:
-            proj_paths.append(line.strip("\n"))
-    proj_paths = list(zip(range(1, len(proj_paths) + 1), proj_paths))
+    proj_paths =  os.listdir(os.path.join(__file__, "tokenizer-sample-input"))
+    proj_paths = list(enumerate(proj_paths, start=1))
     # it will diverge the process flow on process_file()
 
     if os.path.exists(PATH_stats_file_folder) or os.path.exists(PATH_bookkeeping_proj_folder) or os.path.exists(PATH_tokens_file_folder):
@@ -452,21 +443,15 @@ if __name__ == '__main__':
         os.makedirs(PATH_bookkeeping_proj_folder)
         os.makedirs(PATH_tokens_file_folder)
 
-    # Split list of projects into N_PROCESSES lists
-    # proj_paths_list = [ proj_paths[i::N_PROCESSES] for i in xrange(N_PROCESSES) ]
-
     # Multiprocessing with N_PROCESSES
     # [process, file_count]
     processes = [[None, init_file_id] for i in range(N_PROCESSES)]
-    # Multiprocessing shared variable instance for recording file_id
-    # file_id_global_var = Value('i', 1)
     # The queue for processes to communicate back to the parent (this process)
     # Initialize it with N_PROCESSES number of (process_id, n_files_processed)
     global_queue = Queue()
     for i in range(N_PROCESSES):
         global_queue.put((i, 0))
 
-    # Start all other projects
     print("*** Starting regular projects...")
     while len(proj_paths) > 0:
         start_child(processes, global_queue, proj_paths, PROJECTS_BATCH)

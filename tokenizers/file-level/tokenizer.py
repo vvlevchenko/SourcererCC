@@ -16,8 +16,6 @@ N_PROCESSES = 2
 PROJECTS_BATCH = 20
 
 dirs_config = {}
-dirs_config["projects_list"] = 'projects-list.txt'
-dirs_config["priority_projects_list"] = None
 dirs_config["stats_folder"] = 'files_stats'
 dirs_config["bookkeeping_folder"] = 'bookkeeping_projs'
 dirs_config["tokens_file"] = 'files_tokens'
@@ -54,9 +52,6 @@ def read_config():
     # Get info from config.ini into global variables
     N_PROCESSES = config.getint('Main', 'N_PROCESSES')
     PROJECTS_BATCH = config.getint('Main', 'PROJECTS_BATCH')
-    dirs_config["projects_list"] = config.get('Main', 'FILE_projects_list')
-    if config.has_option('Main', 'priority_projects_list'):
-        dirs_config["priority_projects_list"] = config.get('Main', 'FILE_priority_projects')
     dirs_config["stats_folder"] = config.get('Folders/Files', 'PATH_stats_file_folder')
     dirs_config["bookkeeping_folder"] = config.get('Folders/Files', 'PATH_bookkeeping_proj_folder')
     dirs_config["tokens_file"] = config.get('Folders/Files', 'PATH_tokens_file_folder')
@@ -204,12 +199,8 @@ def process_zip_ball(process_num, zip_file, proj_id, proj_path, base_file_id, FI
 
 
 def process_one_project(process_num, proj_id, proj_path, base_file_id, FILE_tokens_file, FILE_bookkeeping_proj, FILE_stats_file):
-    p_start = dt.datetime.now()
     print(f"[INFO] Starting  project <{proj_id},{proj_path}> (process {process_num})")
-    if not os.path.isfile(proj_path):
-        print(f"[WARNING] Unable to open project <{proj_id},{proj_path}> (process {process_num})")
-        return
-
+    p_start = dt.datetime.now()
     zip_file = proj_path
     times = process_zip_ball(process_num, zip_file, proj_id, proj_path, base_file_id, FILE_tokens_file, FILE_bookkeeping_proj, FILE_stats_file)
     zip_time, file_time, string_time, tokens_time, write_time, hash_time, regex_time = (-1, -1, -1, -1, -1, -1, -1)
@@ -267,8 +258,7 @@ def start_child(processes, global_queue, proj_paths, batch):
     del proj_paths[:batch]
 
     print("Starting new process %s" % pid)
-    p = Process(name='Process ' + str(pid), target=process_projects,
-                args=(pid, paths_batch, processes[pid][1], global_queue))
+    p = Process(name=f'Process {pid}', target=process_projects, args=(pid, paths_batch, processes[pid][1], global_queue))
     processes[pid][0] = p
     p.start()
 
@@ -279,8 +269,7 @@ def kill_child(processes, pid, n_files_processed):
     if processes[pid][0] is not None:
         processes[pid][0] = None
         processes[pid][1] += n_files_processed
-        print("Process %s finished, %s files processed (%s). Current total: %s" % (
-            pid, n_files_processed, processes[pid][1], file_count))
+        print(f"Process {pid} finished, {n_files_processed} files processed (total by that process: {processed[pid][1]}). Current total: {file_count}")
 
 
 def active_process_count(processes):
@@ -295,19 +284,8 @@ if __name__ == '__main__':
         sys.exit()
     p_start = dt.datetime.now()
 
-    prio_proj_paths = []
-    if dirs_config["priority_projects_list"] is not None:
-        with open(dirs_config["priority_projects_list"], "r", encoding="utf-8") as f:
-            for line in f:
-                line_split = line.strip('\n')
-                prio_proj_paths.append(line_split)
-        prio_proj_paths = zip(range(init_proj_id, len(prio_proj_paths) + init_proj_id), prio_proj_paths)
-
-    proj_paths = []
-    with open(dirs_config["projects_list"], "r", encoding="utf-8") as f:
-        for line in f:
-            proj_paths.append(line.strip("\n"))
-    proj_paths = list(zip(range(1, len(proj_paths) + 1), proj_paths))
+    proj_paths = os.listdir(os.path.join(__file__, "tokenizer-sample-input"))
+    proj_paths = list(enumerate(proj_paths, start=1))
 
     if os.path.exists(dirs_config["stats_folder"]) or os.path.exists(dirs_config["bookkeeping_folder"]) or os.path.exists(dirs_config["tokens_file"]):
         missing_files = filter(os.path.exists, [dirs_config["stats_folder"], dirs_config["bookkeeping_folder"], dirs_config["tokens_file"]])
@@ -326,10 +304,6 @@ if __name__ == '__main__':
     global_queue = Queue()
     for i in range(N_PROCESSES):
         global_queue.put((i, 0))
-
-    print("*** Starting priority projects...")
-    while len(prio_proj_paths) > 0:
-        start_child(processes, global_queue, prio_proj_paths, 1)
 
     print("*** Starting regular projects...")
     while len(proj_paths) > 0:
