@@ -1,5 +1,9 @@
 # Files' purpose
 
+## tokenizer-sample-input.zip
+
+Probably sample input for SourcererCC. Haven't tested it anyway.
+
 ## import_github_projects.sh
 
 Copies projects names and downloaded projects from `cloneGithub/` into block-level tokenizer. Left from modified runSourcererCC.sh script
