@@ -141,6 +141,8 @@ def print_results(results_file, stats_files, blocks_mode):
         if blocks_mode:
             full_results[formatted_titles[code_id]["file"]]["start_line"] = formatted_titles[code_id]["start_line"]
             full_results[formatted_titles[code_id]["file"]]["end_line"] = formatted_titles[code_id]["end_line"]
+        else:
+            full_results[formatted_titles[code_id]["file"]]["SLOC"] = formatted_titles[code_id]["SLOC"]
     print(json.dumps(full_results, indent=4))
 
 
