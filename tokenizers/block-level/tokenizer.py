@@ -18,6 +18,7 @@ MULTIPLIER = 50000000
 
 N_PROCESSES = 2
 PROJECTS_BATCH = 20
+FILE_projects_list = 'project-list.txt'
 PATH_stats_file_folder = 'files_stats'
 PATH_bookkeeping_proj_folder = 'bookkeeping_projs'
 PATH_tokens_file_folder = 'files_tokens'
@@ -67,6 +68,7 @@ def read_config():
     # Get info from config.ini into global variables
     N_PROCESSES = config.getint('Main', 'N_PROCESSES')
     PROJECTS_BATCH = config.getint('Main', 'PROJECTS_BATCH')
+    FILE_projects_list = config.get('Main', 'FILE_projects_list')
     PATH_stats_file_folder = config.get('Folders/Files', 'PATH_stats_file_folder')
     PATH_bookkeeping_proj_folder = config.get('Folders/Files', 'PATH_bookkeeping_proj_folder')
     PATH_tokens_file_folder = config.get('Folders/Files', 'PATH_tokens_file_folder')
@@ -431,7 +433,9 @@ if __name__ == '__main__':
     read_config()
     p_start = dt.datetime.now()
 
-    proj_paths =  os.listdir(os.path.join(__file__, "tokenizer-sample-input"))
+    proj_paths = []
+    with open(FILE_projects_list, "r", encoding="utf-8") as f:
+        proj_paths = f.read().split("\n")
     proj_paths = list(enumerate(proj_paths, start=1))
     # it will diverge the process flow on process_file()
 

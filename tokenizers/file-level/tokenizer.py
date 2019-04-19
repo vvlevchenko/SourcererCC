@@ -19,6 +19,7 @@ dirs_config = {}
 dirs_config["stats_folder"] = 'files_stats'
 dirs_config["bookkeeping_folder"] = 'bookkeeping_projs'
 dirs_config["tokens_file"] = 'files_tokens'
+FILE_projects_list = "project-list.txt"
 language_config = {}
 
 # Reading Language settings
@@ -39,6 +40,7 @@ def read_config():
     global language_config
     global init_file_id
     global init_proj_id
+    global FILE_projects_list
 
     config = ConfigParser()
 
@@ -64,6 +66,7 @@ def read_config():
     language_config["comment_close_tag"] = re.escape(config.get('Language', 'comment_close_tag'))
     language_config["comment_open_close_pattern"] = language_config["comment_open_tag"] + '.*?' + language_config["comment_close_tag"]
     language_config["file_extensions"] = config.get('Language', 'File_extensions').split(' ')
+    FILE_projects_list = config.get("Main", "FILE_projects_list")
     # Reading config settings
     init_file_id = config.getint('Config', 'init_file_id')
     init_proj_id = config.getint('Config', 'init_proj_id')
@@ -269,7 +272,7 @@ def kill_child(processes, pid, n_files_processed):
     if processes[pid][0] is not None:
         processes[pid][0] = None
         processes[pid][1] += n_files_processed
-        print(f"Process {pid} finished, {n_files_processed} files processed (total by that process: {processed[pid][1]}). Current total: {file_count}")
+        print(f"Process {pid} finished, {n_files_processed} files processed (total by that process: {processes[pid][1]}). Current total: {file_count}")
 
 
 def active_process_count(processes):
@@ -284,7 +287,9 @@ if __name__ == '__main__':
         sys.exit()
     p_start = dt.datetime.now()
 
-    proj_paths = os.listdir(os.path.join(__file__, "tokenizer-sample-input"))
+    proj_paths = []
+    with open(FILE_projects_list, "r", encoding="utf-8") as f:
+        proj_paths = f.read().split("\n")
     proj_paths = list(enumerate(proj_paths, start=1))
 
     if os.path.exists(dirs_config["stats_folder"]) or os.path.exists(dirs_config["bookkeeping_folder"]) or os.path.exists(dirs_config["tokens_file"]):
