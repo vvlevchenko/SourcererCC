@@ -134,8 +134,6 @@ def print_results(results_file, stats_files, blocks_mode):
                 "file": get_file_name(stats[code_id]["file_path"]),
                 "SLOC": stats[code_id]["SLOC"]
             }
-    print(f"RESULTS:\n{results}")
-    print(f"STATS:\n{stats}")
     for code_id, code_id_list in results.items():
         full_results[formatted_titles[code_id]["file"]] = {
             "clones": list(map(lambda x: formatted_titles[x], code_id_list))
