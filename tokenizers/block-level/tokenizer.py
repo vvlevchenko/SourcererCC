@@ -46,7 +46,6 @@ def hash_measuring_time(string):
 
 
 def read_config():
-    print("[INFO] Reading config")
     global N_PROCESSES, PROJECTS_BATCH
     global PATH_stats_file_folder, PATH_bookkeeping_proj_folder, PATH_tokens_file_folder
     global separators, comment_inline, comment_inline_pattern, comment_open_tag, comment_close_tag, comment_open_close_pattern
@@ -88,7 +87,6 @@ def read_config():
 
     # flag before proj_id
     proj_id_flag = config.getint('Config', 'init_proj_id')
-    print("[INFO] Config read successfully")
 
 
 def count_lines(string, count_empty = True):
@@ -181,9 +179,7 @@ def tokenize_blocks(file_string, comment_inline_pattern, comment_open_close_patt
         (block_linenos, blocks) = extractPythonFunction.getFunctions(file_string, file_path)
     # Notice workaround with replacing. It is needed because javalang counts things like String[]::new as syntax errors
     if '.java' in file_extensions:
-        print("[INFO] Starting javalang...")
         (block_linenos, blocks, experimental_values) = extractJavaFunction.getFunctions(file_string.replace("[]::", "::"), file_path, separators, comment_inline_pattern)
-        print("[INFO] Ended javalang")
 
     if block_linenos is None:
         print("[INFO] Returning None on tokenize_blocks for file {}".format(file_path))
@@ -195,7 +191,6 @@ def tokenize_blocks(file_string, comment_inline_pattern, comment_open_close_patt
     file_hash, hash_time = hash_measuring_time(file_string)
     file_string, lines, LOC, SLOC, re_time = get_lines_stats(file_string, comment_open_close_pattern, comment_inline_pattern)
     final_stats = (file_hash, lines, LOC, SLOC)
-    print("[INFO] Got blocks stats")
 
     for i, block_string in enumerate(blocks):
         (start_line, end_line) = block_linenos[i]
@@ -218,7 +213,6 @@ def process_file_contents(file_string, proj_id, file_id, container_path, file_pa
 
     print(f"[INFO] Started tokenizing blocks on {file_path}")
     (final_stats, blocks_data, file_parsing_times) = tokenize_blocks(file_string, comment_inline_pattern, comment_open_close_pattern, separators, os.path.join(container_path, file_path))
-    print(f"[INFO] Ended tokenizing blocks on {file_path}")
     if (final_stats is None) or (blocks_data is None) or (file_parsing_times is None):
         print("[WARNING] " + 'Problems tokenizing file ' + os.path.join(container_path, file_path))
         return [0] * 5
@@ -258,50 +252,6 @@ def process_file_contents(file_string, proj_id, file_id, container_path, file_pa
         print(e)
     print(f"[INFO] Successfully ran process_file_contents {os.path.join(container_path, file_path)}")
     return file_parsing_times + [w_time]  # [s_time, t_time, w_time, hash_time, re_time]
-
-
-def process_regular_folder(process_num, proj_id, proj_path, proj_url, base_file_id, file_tokens_file, file_stats_file):
-    zip_time = file_time = string_time = tokens_time = hash_time = write_time = regex_time = 0
-    result = [f for dp, dn, filenames in os.walk(proj_path) for f in filenames if (os.path.splitext(f)[1] in file_extensions)]
-
-    for file_path in result:
-        z_time = dt.datetime.now()
-        try:
-            my_file = io.open(os.path.join(proj_path, file_path), encoding='utf-8')
-            file_bytes = str(os.stat(os.path.join(proj_path, file_path)).st_size)
-        except Exception as e:
-            print("[WARNING] Unable to open file (1) <{}> (process {})".format(file_path, process_num))
-            print(e)
-            continue
-
-        zip_time += (dt.datetime.now() - z_time).microseconds
-
-        if my_file is None:
-            print("[WARNING] " + 'Unable to open file (2) <' + file_path + '> (process ' + str(process_num) + ')')
-            continue
-
-        try:
-            f_time = dt.datetime.now()
-            file_string = my_file.read()
-            file_time += (dt.datetime.now() - f_time).microseconds
-        except Exception as e:
-            print("[WARNING] " + 'Unable to read contents of file %s' % (os.path.join(proj_path, file_path)))
-            print(e)
-            continue
-
-        file_id = process_num * MULTIPLIER + base_file_id + file_count
-        try:
-            times = process_file_contents(file_string, proj_id, file_id, proj_path, file_path, file_bytes, proj_url, file_tokens_file, file_stats_file)
-        except Exception as e:
-            print("[WARNING] " + 'Unable to process file %s. %s' % (os.path.join(proj_path, file_path), e))
-            continue
-
-        string_time += times[0]
-        tokens_time += times[1]
-        hash_time += times[2]
-        regex_time += times[3]
-        write_time += times[4]
-    return zip_time, file_time, string_time, tokens_time, write_time, hash_time, regex_time
 
 
 def process_zip_ball(process_num, proj_id, proj_path, proj_url, base_file_id, file_tokens_file, file_stats_file):
@@ -407,7 +357,7 @@ def start_child(processes, global_queue, proj_paths, batch):
     paths_batch = proj_paths[:batch]
     del proj_paths[:batch]
 
-    print("Starting new process {}".format(pid))
+    print("[INFO] Starting new process {}".format(pid))
     p = Process(name='Process ' + str(pid), target=process_projects, args=(pid, paths_batch, processes[pid][1], global_queue))
     processes[pid][0] = p
     p.start()
@@ -419,7 +369,7 @@ def kill_child(processes, pid, n_files_processed):
     if processes[pid][0] is not None:
         processes[pid][0] = None
         processes[pid][1] += n_files_processed
-        print("Process {} finished, {} files processed {}. Current total: {}".format(pid, n_files_processed, processes[pid][1], file_count))
+        print("[INFO] Process {} finished, {} files processed {}. Current total: {}".format(pid, n_files_processed, processes[pid][1], file_count))
 
 
 def active_process_count(processes):
@@ -440,7 +390,7 @@ if __name__ == '__main__':
     # it will diverge the process flow on process_file()
 
     if os.path.exists(PATH_stats_file_folder) or os.path.exists(PATH_bookkeeping_proj_folder) or os.path.exists(PATH_tokens_file_folder):
-        print('ERROR - Folder [{}] or [{}] or [{}] already exists!'.format(PATH_stats_file_folder, PATH_bookkeeping_proj_folder, PATH_tokens_file_folder))
+        print('[ERROR] ERROR - Folder [{}] or [{}] or [{}] already exists!'.format(PATH_stats_file_folder, PATH_bookkeeping_proj_folder, PATH_tokens_file_folder))
         sys.exit(1)
     else:
         os.makedirs(PATH_stats_file_folder)
@@ -456,14 +406,14 @@ if __name__ == '__main__':
     for i in range(N_PROCESSES):
         global_queue.put((i, 0))
 
-    print("*** Starting regular projects...")
+    print("[INFO] *** Starting regular projects...")
     while len(proj_paths) > 0:
         start_child(processes, global_queue, proj_paths, PROJECTS_BATCH)
 
-    print("*** No more projects to process. Waiting for children to finish...")
+    print("[INFO] *** No more projects to process. Waiting for children to finish...")
     while active_process_count(processes) > 0:
         pid, n_files_processed = global_queue.get()
         kill_child(processes, pid, n_files_processed)
 
     p_elapsed = dt.datetime.now() - p_start
-    print("*** All done. %s files in %s" % (file_count, p_elapsed))
+    print("[INFO] *** All done. %s files in %s" % (file_count, p_elapsed))

@@ -6,11 +6,13 @@ import sys
 import os
 import re
 import json
+import zipfile
 
 
 def get_file_name(file_path):
-    projects_dir = "tokenizer-sample-input"
-    return re.sub(r"\.zip/[a-zA-Z0-9-.]+-master/", "/tree/master/", file_path.strip("\"")[len(projects_dir + "/"):].replace("--", "/"))
+    result = re.sub(r"\.zip/[a-zA-Z0-9-.]+-master/", "/tree/master/", file_path.strip("\"").replace("--", "/"))
+    result = re.sub(r"/.*/([^/]+/[^/]+/tree/master/)", r"\1", result)
+    return result
 
 
 def get_file_lines(filename):
@@ -112,6 +114,17 @@ def get_results(results_file):
     return results
 
 
+def get_lines(zip_file_path, start_line, end_line, source_file):
+    result = ""
+    with zipfile.ZipFile(zip_file_path, "r") as repo:
+        for code_file in repo.infolist():
+            if source_file != code_file.filename:
+                continue
+            with repo.open(code_file) as f:
+                result = f.read().decode("utf-8").split("\n")
+    return "\n".join(result[start_line - 1 : end_line])
+
+
 def print_results(results_file, stats_files, blocks_mode):
     stats = get_stats_info(stats_files, blocks_mode)
     results = get_results(results_file)
@@ -123,16 +136,25 @@ def print_results(results_file, stats_files, blocks_mode):
                 filename = get_file_name(stats[stats[code_id]["file_id"]]["file_path"])
                 start_line = stats[code_id]["start_line"]
                 end_line = stats[code_id]["end_line"]
+                repo_zip_filename = stats[stats[code_id]["file_id"]]["file_path"][1:-1]
+                source_file = repo_zip_filename[repo_zip_filename.index(".zip") + 5:]
+                repo_zip_filename = repo_zip_filename[:repo_zip_filename.index(".zip") + 4]
                 formatted_titles[code_id] = {
                     "file": filename,
                     "start_line": start_line,
-                    "end_line": end_line
+                    "end_line": end_line,
+                    "content": get_lines(repo_zip_filename, start_line, end_line, source_file)
                 }
     else:
         for code_id in stats.keys():
+            filename = get_file_name(stats[code_id]["file_path"])
+            repo_zip_filename = stats[code_id]["file_path"][1:-1]
+            source_file = repo_zip_filename[repo_zip_filename.index(".zip") + 5:]
+            repo_zip_filename = repo_zip_filename[:repo_zip_filename.index(".zip") + 4]
             formatted_titles[code_id] = {
                 "file": get_file_name(stats[code_id]["file_path"]),
-                "SLOC": stats[code_id]["SLOC"]
+                "SLOC": stats[code_id]["SLOC"],
+                "content": get_lines(repo_zip_filename, 1, int(stats[code_id]["SLOC"]), source_file)
             }
     for code_id, code_id_list in results.items():
         full_results[formatted_titles[code_id]["file"]] = {
@@ -141,9 +163,11 @@ def print_results(results_file, stats_files, blocks_mode):
         if blocks_mode:
             full_results[formatted_titles[code_id]["file"]]["start_line"] = formatted_titles[code_id]["start_line"]
             full_results[formatted_titles[code_id]["file"]]["end_line"] = formatted_titles[code_id]["end_line"]
+            full_results[formatted_titles[code_id]["file"]]["content"] = formatted_titles[code_id]["content"]
         else:
             full_results[formatted_titles[code_id]["file"]]["SLOC"] = formatted_titles[code_id]["SLOC"]
-    print(json.dumps(full_results, indent=4))
+            full_results[formatted_titles[code_id]["file"]]["content"] = formatted_titles[code_id]["content"]
+    return full_results
 
 
 def print_projects_list(bookkeeping_files):
@@ -153,7 +177,7 @@ def print_projects_list(bookkeeping_files):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--blocks-mode", dest="blocks_mode", nargs="?", const=True, default=False, help="Specify if files produced in blocks-mode")
+    parser.add_argument("--block-mode", dest="blocks_mode", nargs="?", const=True, default=False, help="Specify if files produced in blocks-mode")
     parser.add_argument("-b", "--bookkeepingFiles", dest="bookkeeping_files", default=False, help="File or folder with bookkeeping files (*.projs).")
     parser.add_argument("-r", "--resultsFile", dest="results_file", default=False, help="File with results of SourcererCC (results.pairs).")
     parser.add_argument("-s", "--statsFiles", dest="stats_files", default=False, help="File or folder with stats files (*.stats).")
@@ -170,7 +194,8 @@ if __name__ == "__main__":
         if not options.stats_files:
             print("No stats files specified. Exiting")
             sys.exit(0)
-        print_results(options.results_file, options.stats_files, options.blocks_mode)
+        res = print_results(options.results_file, options.stats_files, options.blocks_mode)
+        print(json.dumps(res, indent=4))
     elif options.bookkeeping_files:
         print_projects_list(options.bookkeeping_files)
 
