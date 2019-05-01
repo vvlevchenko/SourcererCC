@@ -5,7 +5,7 @@ import os
 import sys
 from multiprocessing import Process, Queue
 
-from block_level.tokenizing import *
+from tokenizing.block_tokenizer import *
 
 
 def process_projects(process_num, list_projects, base_file_id, global_queue):
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     # Need to bypass javalang syntax tree traverse limits
     sys.setrecursionlimit(3000)
 
-    read_config()
+    read_config("block_config.ini")
     p_start = dt.datetime.now()
 
     proj_paths = []

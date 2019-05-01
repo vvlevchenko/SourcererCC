@@ -6,6 +6,9 @@ import hashlib
 import os
 from configparser import ConfigParser
 
+from .utils import count_lines
+
+
 MULTIPLIER = 50000000
 
 N_PROCESSES = 2
@@ -20,7 +23,7 @@ language_config = {}
 file_count = 0
 
 
-def read_config():
+def read_config(config_filename):
     global N_PROCESSES, PROJECTS_BATCH
     global dirs_config
     global language_config
@@ -32,7 +35,7 @@ def read_config():
 
     # parse existing file
     try:
-        config.read(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.ini'))
+        config.read(os.path.join(os.path.dirname(os.path.abspath(__file__)), config_filename))
     except IOError:
         print('ERROR - config.ini not found')
         sys.exit()
@@ -56,13 +59,6 @@ def read_config():
     # Reading config settings
     init_file_id = config.getint('Config', 'init_file_id')
     init_proj_id = config.getint('Config', 'init_proj_id')
-
-
-def count_lines(string, count_empty = True):
-    result = string.count('\n')
-    if not string.endswith('\n') and (count_empty or string != ""):
-        result += 1
-    return result
 
 
 def md5_hash(string):
@@ -134,7 +130,7 @@ def process_file_contents(file_string, proj_id, file_id, container_path, file_pa
     file_count += 1
     (final_stats, final_tokens, file_times) = tokenize_files(file_string)
     (file_hash, lines, LOC, SLOC) = final_stats
-    (tokens_count_total, tokens_count_unique, token_hash, tokens) = final_tokens
+    (tokens_count_total, tokens_count_unique, tokens_hash, tokens) = final_tokens
     file_path = os.path.join(container_path, file_path)
     start_time = dt.datetime.now()
     FILE_stats_file.write(f'{proj_id},{file_id},"{file_path}","{file_hash}",{file_bytes},{lines},{LOC},{SLOC}\n')

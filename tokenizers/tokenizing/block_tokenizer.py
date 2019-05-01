@@ -6,6 +6,8 @@ import hashlib
 import os
 from configparser import ConfigParser
 
+
+from .utils import count_lines
 from . import extract_java_functions
 from . import extract_python_functions
 
@@ -40,7 +42,7 @@ def hash_measuring_time(string):
     return hash_value, time
 
 
-def read_config():
+def read_config(config_filename):
     global N_PROCESSES, PROJECTS_BATCH
     global PATH_stats_file_folder, PATH_bookkeeping_proj_folder, PATH_tokens_file_folder
     global separators, comment_inline, comment_inline_pattern, comment_open_tag, comment_close_tag, comment_open_close_pattern
@@ -54,7 +56,7 @@ def read_config():
 
     # parse existing file
     try:
-        config.read(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.ini'))
+        config.read(os.path.join(os.path.dirname(os.path.abspath(__file__)), config_filename))
     except IOError:
         print('[ERROR] - Config settings not found. Usage: $python this-script.py config-file.ini')
         sys.exit()
@@ -82,13 +84,6 @@ def read_config():
 
     # flag before proj_id
     proj_id_flag = config.getint('Config', 'init_proj_id')
-
-
-def count_lines(string, count_empty = True):
-    result = string.count('\n')
-    if not string.endswith('\n') and (count_empty or string != ""):
-        result += 1
-    return result
 
 
 def remove_comments(string, comment_open_close_pattern, comment_inline_pattern):
@@ -310,12 +305,12 @@ def process_one_project(process_num, proj_id, proj_path, base_file_id, file_toke
     file_bookkeeping_proj.write("{},\"{}\",\"{}\"\n".format(proj_id, proj_path, proj_url))
 
     p_elapsed = dt.datetime.now() - p_start
-    print("[INFO] " + 'Project finished <{},{}> (process {})'.format(proj_id, proj_path, process_num))
-    print("[INFO] " + ' ({}): Total: {} ms'.format(process_num, p_elapsed))
-    print("[INFO] " + '     Zip: {}'.format(zip_time))
-    print("[INFO] " + '     Read: {}'.format(file_time))
-    print("[INFO] " + '     Separators: {} ms'.format(string_time))
-    print("[INFO] " + '     Tokens: {} ms'.format(tokens_time))
-    print("[INFO] " + '     Write: {} ms'.format(write_time))
-    print("[INFO] " + '     Hash: {} ms'.format(hash_time))
-    print("[INFO] " + '     regex: {} ms'.format(regex_time))
+    print("[INFO] Project finished <{},{}> (process {})".format(proj_id, proj_path, process_num))
+    print("[INFO]  ({}): Total: {} ms".format(process_num, p_elapsed))
+    print("[INFO]      Zip: {}".format(zip_time))
+    print("[INFO]      Read: {}".format(file_time))
+    print("[INFO]      Separators: {} ms".format(string_time))
+    print("[INFO]      Tokens: {} ms".format(tokens_time))
+    print("[INFO]      Write: {} ms".format(write_time))
+    print("[INFO]      Hash: {} ms".format(hash_time))
+    print("[INFO]      regex: {} ms".format(regex_time))
