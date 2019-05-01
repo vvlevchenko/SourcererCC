@@ -222,7 +222,7 @@ def process_one_project(process_num, proj_id, proj_path, base_file_id, out_files
     if not os.path.isfile(proj_path):
         print(f"[WARNING] Unable to open {project_info}")
         return
-    times = process_zip_ball(process_num, proj_id, proj_path, base_file_id, language_config, process_file_contents, out_files)
+    times = process_zip_ball(process_num, proj_id, proj_path, base_file_id, language_config, process_file_contents, out_files, inner_config)
     file_bookkeeping_proj.write(f'{proj_id},"{proj_path}"\n')
     elapsed_time = dt.datetime.now() - start_time
 
