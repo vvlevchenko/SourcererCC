@@ -66,13 +66,16 @@ if __name__ == '__main__':
     p_start = dt.datetime.now()
 
     proj_paths = []
-    with open(FILE_projects_list, "r", encoding="utf-8") as f:
+    with open(inner_config["FILE_projects_list"], "r", encoding="utf-8") as f:
         proj_paths = f.read().split("\n")
     proj_paths = list(enumerate(proj_paths, start=1))
     # it will diverge the process flow on process_file()
 
+    PATH_stats_file_folder = dirs_config["stats_file_folder"]
+    PATH_bookkeeping_proj_folder = dirs_config["bookkeeping_proj_folder"]
+    PATH_tokens_file_folder = dirs_config["tokens_file_folder"]
     if os.path.exists(PATH_stats_file_folder) or os.path.exists(PATH_bookkeeping_proj_folder) or os.path.exists(PATH_tokens_file_folder):
-        print('[ERROR] ERROR - Folder [{}] or [{}] or [{}] already exists!'.format(PATH_stats_file_folder, PATH_bookkeeping_proj_folder, PATH_tokens_file_folder))
+        print(f'[ERROR] - Folder [{PATH_stats_file_folder}] or [{PATH_bookkeeping_proj_folder}] or [{PATH_tokens_file_folder}] already exists!')
         sys.exit(1)
     else:
         os.makedirs(PATH_stats_file_folder)
