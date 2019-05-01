@@ -178,20 +178,20 @@ def process_file_contents(file_string, proj_id, file_id, container_path, file_pa
     # file stats start with a letter 'f'
     (file_hash, lines, LOC, SLOC) = final_stats
     file_stats_file.write(f'f,{proj_id},{file_id},"{file_path}","","{file_hash}",{file_bytes},{lines},{LOC},{SLOC}\n')
-    blocks_data = enumerate(blocks_data, 10000)
 
     start_time = dt.datetime.now()
     try:
-        for relative_id, block_data in blocks_data:
-            (blocks_tokens, blocks_stats, experimental_values) = block_data
+        for relative_id, block_data in enumerate(blocks_data, 10000):
+            (block_tokens, blocks_stats, experimental_value) = block_data
             block_id = f"{relative_id}{file_id}"
 
-            (tokens_count_total, tokens_count_unique, token_hash, tokens) = blocks_tokens
-            (block_hash, block_lines, block_LOC, block_SLOC, start_line, end_line) = blocks_stats
+            (tokens_count_total, tokens_count_unique, token_hash, tokens) = block_tokens
+            (stats, start_line, end_line) = blocks_stats
+            (block_hash, block_lines, block_LOC, block_SLOC) = stats
 
             # Adjust the blocks stats written to the files, file stats start with a letter 'b'
             stats_file.write(f'b,{proj_id},{block_id},"{block_hash}",{block_lines},{block_LOC},{block_SLOC},{start_line},{end_line}\n')
-            tokens_file.write(f'{proj_id},{block_id},{tokens_count_total},{tokens_count_unique},{experimental_values.replace(",", ";")},{token_hash}@#@{tokens}\n')
+            tokens_file.write(f'{proj_id},{block_id},{tokens_count_total},{tokens_count_unique},{experimental_value.replace(",", ";")},{token_hash}@#@{tokens}\n')
     except Exception as e:
         print("[WARNING] Error on step3 of process_file_contents")
         print(e)
