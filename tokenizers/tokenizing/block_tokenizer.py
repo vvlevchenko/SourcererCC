@@ -207,6 +207,9 @@ def print_times(project_info, elapsed, times):
         print(f"[INFO]      {time_name}: {time} ms")
 
 def process_one_project(process_num, proj_id, proj_path, base_file_id, tokens_file, bookkeeping_proj, stats_file):
+    global inner_config
+    proj_id_flag = inner_config["proj_id_flag"]
+
     project_info = f"project <id: {proj_id}, path: {proj_path}> (process {process_num})"
     print(f"[INFO] Starting  {project_info}")
 
