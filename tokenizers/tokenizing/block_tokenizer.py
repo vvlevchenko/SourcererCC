@@ -221,7 +221,7 @@ def process_zip_ball(process_num, proj_id, zip_file, base_file_id, language_conf
     try:
         with zipfile.ZipFile(zip_file, 'r') as my_file:
             for code_file in my_file.infolist():
-                if not os.path.splitext(code_file.filename)[1] in language_config["file_extensions"]:
+                if not os.path.splitext(code_file.filename)[1] in language_config["extensions"]:
                     continue
 
                 file_id = process_num * inner_config["MULTIPLIER"] + base_file_id + file_count
