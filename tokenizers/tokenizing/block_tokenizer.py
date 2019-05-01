@@ -171,7 +171,7 @@ def process_file_contents(file_string, proj_id, file_id, container_path, file_pa
         return {}
 
     if len(blocks_data) > 90000:
-        print(f"[WARNING] File {file_path} has {len(blocks_data))} blocks, more than 90000. Range MUST be increased")
+        print(f"[WARNING] File {file_path} has {len(blocks_data)} blocks, more than 90000. Range MUST be increased")
         return {}
 
     # file stats start with a letter 'f'
