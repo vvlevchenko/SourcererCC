@@ -1,4 +1,5 @@
 import hashlib
+import zipfile
 
 
 def process_zip_ball(process_num, proj_id, zip_file, base_file_id, language_config, callback, out_files):
