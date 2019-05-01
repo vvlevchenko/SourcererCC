@@ -14,7 +14,7 @@ def process_zip_ball(process_num, proj_id, zip_file, base_file_id, language_conf
         "regex_time": 0
     }
     try:
-        with zipfile.ZipFile(proj_path, 'r') as my_file:
+        with zipfile.ZipFile(zip_file, 'r') as my_file:
             for code_file in my_file.infolist():
                 if not os.path.splitext(code_file.filename)[1] in language_config["file_extensions"]:
                     continue
@@ -22,7 +22,7 @@ def process_zip_ball(process_num, proj_id, zip_file, base_file_id, language_conf
                 file_id = process_num * MULTIPLIER + base_file_id + file_count
                 file_bytes = str(code_file.file_size)
                 file_path = code_file.filename
-                full_code_file_path = os.path.join(proj_path, file_path)
+                full_code_file_path = os.path.join(zip_file, file_path)
 
                 z_time = dt.datetime.now()
                 try:
@@ -49,7 +49,7 @@ def process_zip_ball(process_num, proj_id, zip_file, base_file_id, language_conf
                 for time_name, time in file_times.items():
                     times[time_name] += time
     except zipfile.BadZipFile as e:
-        print(f"[ERROR] Incorrect zip file {proj_path}")
+        print(f"[ERROR] Incorrect zip file {zip_file}")
 
     print(f"[INFO] Successfully ran process_zip_ball {zip_file}")
     return times
