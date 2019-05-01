@@ -159,7 +159,9 @@ def tokenize_blocks(file_string, file_path):
     return (file_hash, lines, LOC, SLOC), blocks_data, times
 
 
-def process_file_contents(file_string, proj_id, file_id, container_path, file_path, file_bytes, file_tokens_file, file_stats_file):
+def process_file_contents(file_string, proj_id, file_id, container_path, file_path, file_bytes, out_files):
+    (tokens_file, _, file_stats_file) = out_files
+
     print(f"[INFO] Started process_file_contents on {file_path}")
     global file_count
     file_count += 1
@@ -206,7 +208,9 @@ def print_times(project_info, elapsed, times):
     for time_name, time in times.items():
         print(f"[INFO]      {time_name}: {time} ms")
 
-def process_one_project(process_num, proj_id, proj_path, base_file_id, tokens_file, bookkeeping_proj, stats_file):
+def process_one_project(process_num, proj_id, proj_path, base_file_id, out_files):
+    _, file_bookkeeping_proj, _ = out_files
+
     global inner_config
     proj_id_flag = inner_config["proj_id_flag"]
 
@@ -218,7 +222,7 @@ def process_one_project(process_num, proj_id, proj_path, base_file_id, tokens_fi
     if not os.path.isfile(proj_path):
         print(f"[WARNING] Unable to open {project_info}")
         return
-    times = process_zip_ball(process_num, proj_id, proj_path, base_file_id, language_config, process_file_contents)
+    times = process_zip_ball(process_num, proj_id, proj_path, base_file_id, language_config, process_file_contents, out_files)
     file_bookkeeping_proj.write(f'{proj_id},"{proj_path}"\n')
     elapsed_time = dt.datetime.now() - start_time
 

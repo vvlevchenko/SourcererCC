@@ -1,7 +1,7 @@
 import hashlib
 
 
-def process_zip_ball(process_num, proj_id, zip_file, base_file_id, FILE_tokens_file, FILE_bookkeeping_proj, FILE_stats_file, language_config, callback):
+def process_zip_ball(process_num, proj_id, zip_file, base_file_id, language_config, callback, out_files):
     print(f"[INFO] Started zip ball {zip_file}")
     times = {
         "zip_time": 0,
@@ -44,7 +44,7 @@ def process_zip_ball(process_num, proj_id, zip_file, base_file_id, FILE_tokens_f
                     print(f"[WARNING] File {file_path} can't be read")
                 times["file_time"] += (dt.datetime.now() - f_time).microseconds
 
-                file_times = callback(file_string, proj_id, file_id, zip_file, file_path, file_bytes, FILE_tokens_file, FILE_stats_file)
+                file_times = callback(file_string, proj_id, file_id, zip_file, file_path, file_bytes, out_files)
                 for time_name, time in file_times.items():
                     times[time_name] += time
     except zipfile.BadZipFile as e:
