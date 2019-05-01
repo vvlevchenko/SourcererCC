@@ -14,9 +14,6 @@ from . import extract_python_functions
 
 language_config = {}
 dirs_config = {}
-inner_config = {
-    "MULTIPLIER": 50000000
-}
 
 file_count = 0
 
@@ -68,8 +65,9 @@ def read_config(config_filename):
         print(f"[ERROR] - Config file {config_filename} is not found")
         sys.exit(1)
 
-    language_config = read_language_config(config)
     inner_config = read_inner_config(config)
+    inner_config["MULTIPLIER"] = 50000000
+    language_config = read_language_config(config)
     dirs_config = read_dirs_config(config)
     return inner_config, dirs_config
 
@@ -209,9 +207,10 @@ def print_times(project_info, elapsed, times):
         print(f"[INFO]      {time_name}: {time} ms")
 
 def process_one_project(process_num, proj_id, proj_path, base_file_id, out_files):
+    global inner_config
+
     _, file_bookkeeping_proj, _ = out_files
 
-    global inner_config
     proj_id_flag = inner_config["proj_id_flag"]
 
     project_info = f"project <id: {proj_id}, path: {proj_path}> (process {process_num})"
