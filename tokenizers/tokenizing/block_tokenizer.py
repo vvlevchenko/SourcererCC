@@ -71,6 +71,7 @@ def read_config(config_filename):
     language_config = read_language_config(config)
     inner_config = read_inner_config(config)
     dirs_config = read_dirs_config(config)
+    return inner_config, dirs_config
 
 
 def get_lines_stats(string, language_config):

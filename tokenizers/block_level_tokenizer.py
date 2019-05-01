@@ -59,13 +59,10 @@ def active_process_count(processes):
 
 
 if __name__ == '__main__':
-    global inner_config
-    global dirs_config
-
     # Need to bypass javalang syntax tree traverse limits
     sys.setrecursionlimit(3000)
 
-    read_config("block_config.ini")
+    inner_config, dirs_config = read_config("block_config.ini")
     p_start = dt.datetime.now()
 
     proj_paths = []
