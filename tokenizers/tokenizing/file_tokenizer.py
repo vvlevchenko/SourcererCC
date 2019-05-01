@@ -60,6 +60,7 @@ def read_config(config_filename):
     # Reading config settings
     init_file_id = config.getint('Config', 'init_file_id')
     init_proj_id = config.getint('Config', 'init_proj_id')
+    return language_config
 
 
 def tokenize_files(file_string):
@@ -120,7 +121,7 @@ def process_one_project(process_num, proj_id, proj_path, base_file_id, FILE_toke
     if not os.path.isfile(proj_path):
         print(f"[WARNING] Unable to open project <{proj_id},{proj_path}> (process {process_num})")
         return
-    times = process_zip_ball(process_num, proj_path, proj_id, proj_path, base_file_id, FILE_tokens_file, FILE_bookkeeping_proj, FILE_stats_file, language_config, process_file_contents)
+    times = process_zip_ball(process_num, proj_id, proj_path, base_file_id, FILE_tokens_file, FILE_bookkeeping_proj, FILE_stats_file, language_config, process_file_contents)
     zip_time, file_time, string_time, tokens_time, write_time, hash_time, regex_time = (-1, -1, -1, -1, -1, -1, -1)
     if times is not None:
         zip_time = times["zip_time"]

@@ -1,7 +1,7 @@
 import hashlib
 
 
-def process_zip_ball(process_num, proj_id, zip_file, proj_path, base_file_id, FILE_tokens_file, FILE_bookkeeping_proj, FILE_stats_file, language_config, callback):
+def process_zip_ball(process_num, proj_id, zip_file, base_file_id, FILE_tokens_file, FILE_bookkeeping_proj, FILE_stats_file, language_config, callback):
     print(f"[INFO] Started zip ball {zip_file}")
     times = {
         "zip_time": 0,
@@ -49,7 +49,7 @@ def process_zip_ball(process_num, proj_id, zip_file, proj_path, base_file_id, FI
                     times[time_name] += time
     except zipfile.BadZipFile as e:
         print(f"[ERROR] Incorrect zip file {proj_path}")
-    
+
     print(f"[INFO] Successfully ran process_zip_ball {zip_file}")
     return times
 
