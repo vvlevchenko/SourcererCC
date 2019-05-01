@@ -196,8 +196,8 @@ def process_file_contents(file_string, proj_id, file_id, container_path, file_pa
         print("[WARNING] Error on step3 of process_file_contents")
         print(e)
     print(f"[INFO] Successfully ran process_file_contents {os.path.join(container_path, file_path)}")
-    file_times["write_time"] = (dt.datetime.now() - start_time).microseconds
-    return file_times
+    times["write_time"] = (dt.datetime.now() - start_time).microseconds
+    return times
 
 
 def print_times(project_info, elapsed, times):
