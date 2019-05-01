@@ -68,6 +68,7 @@ if __name__ == '__main__':
     PATH_tokens_file_folder = dirs_config["tokens_file_folder"]
     N_PROCESSES = inner_config["N_PROCESSES"]
     PROJECTS_BATCH = inner_config["PROJECTS_BATCH"]
+    init_file_id = inner_config["inner_file_id"]
 
     p_start = dt.datetime.now()
 
