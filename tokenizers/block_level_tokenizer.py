@@ -63,6 +63,12 @@ if __name__ == '__main__':
     sys.setrecursionlimit(3000)
 
     inner_config, dirs_config = read_config("block_config.ini")
+    PATH_stats_file_folder = dirs_config["stats_file_folder"]
+    PATH_bookkeeping_proj_folder = dirs_config["bookkeeping_proj_folder"]
+    PATH_tokens_file_folder = dirs_config["tokens_file_folder"]
+    N_PROCESSES = inner_config["N_PROCESSES"]
+    PROJECTS_BATCH = inner_config["PROJECTS_BATCH"]
+
     p_start = dt.datetime.now()
 
     proj_paths = []
@@ -71,9 +77,6 @@ if __name__ == '__main__':
     proj_paths = list(enumerate(proj_paths, start=1))
     # it will diverge the process flow on process_file()
 
-    PATH_stats_file_folder = dirs_config["stats_file_folder"]
-    PATH_bookkeeping_proj_folder = dirs_config["bookkeeping_proj_folder"]
-    PATH_tokens_file_folder = dirs_config["tokens_file_folder"]
     if os.path.exists(PATH_stats_file_folder) or os.path.exists(PATH_bookkeeping_proj_folder) or os.path.exists(PATH_tokens_file_folder):
         print(f'[ERROR] - Folder [{PATH_stats_file_folder}] or [{PATH_bookkeeping_proj_folder}] or [{PATH_tokens_file_folder}] already exists!')
         sys.exit(1)
