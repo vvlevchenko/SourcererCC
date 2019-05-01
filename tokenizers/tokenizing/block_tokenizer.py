@@ -158,7 +158,7 @@ def tokenize_blocks(file_string, file_path):
 
 
 def process_file_contents(file_string, proj_id, file_id, container_path, file_path, file_bytes, out_files):
-    (tokens_file, _, file_stats_file) = out_files
+    (tokens_file, _, stats_file) = out_files
 
     print(f"[INFO] Started process_file_contents on {file_path}")
     global file_count
@@ -177,7 +177,7 @@ def process_file_contents(file_string, proj_id, file_id, container_path, file_pa
 
     # file stats start with a letter 'f'
     (file_hash, lines, LOC, SLOC) = final_stats
-    file_stats_file.write(f'f,{proj_id},{file_id},"{file_path}","","{file_hash}",{file_bytes},{lines},{LOC},{SLOC}\n')
+    stats_file.write(f'f,{proj_id},{file_id},"{file_path}","","{file_hash}",{file_bytes},{lines},{LOC},{SLOC}\n')
 
     start_time = dt.datetime.now()
     try:
