@@ -177,7 +177,7 @@ def process_file_contents(file_string, proj_id, file_id, container_path, file_pa
 
     # file stats start with a letter 'f'
     (file_hash, lines, LOC, SLOC) = final_stats
-    file_stats_file.write(f'f,{proj_id},{file_id},"{file_path}","{file_url}","{file_hash}",{file_bytes},{lines},{LOC},{SLOC}\n')
+    file_stats_file.write(f'f,{proj_id},{file_id},"{file_path}","","{file_hash}",{file_bytes},{lines},{LOC},{SLOC}\n')
     blocks_data = enumerate(blocks_data, 10000)
 
     start_time = dt.datetime.now()
