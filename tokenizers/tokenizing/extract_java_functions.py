@@ -35,6 +35,7 @@ def get_functions(filestring, file_path, comment_inline_pattern):
     try:
         for path, node in nodes:
             node_name = '.' + node.name
+            name = ""
             for i, var in enumerate(reversed(path)):
                 if isinstance(var, javalang.tree.ClassDeclaration):
                     if len(path) - 3 == i:  # Top most
