@@ -206,6 +206,60 @@ def print_times(project_info, elapsed, times):
     for time_name, time in times.items():
         print(f"[INFO]      {time_name}: {time} ms")
 
+
+def process_zip_ball(process_num, proj_id, zip_file, base_file_id, language_config, out_files, inner_config):
+    print(f"[INFO] Started zip ball {zip_file}")
+    times = {
+        "zip_time": 0,
+        "file_time": 0,
+        "string_time": 0,
+        "tokens_time": 0,
+        "write_time": 0,
+        "hash_time": 0,
+        "regex_time": 0
+    }
+    try:
+        with zipfile.ZipFile(zip_file, 'r') as my_file:
+            for code_file in my_file.infolist():
+                if not os.path.splitext(code_file.filename)[1] in language_config["file_extensions"]:
+                    continue
+
+                file_id = process_num * inner_config["MULTIPLIER"] + base_file_id + file_count
+                file_bytes = str(code_file.file_size)
+                file_path = code_file.filename
+                full_code_file_path = os.path.join(zip_file, file_path)
+
+                z_time = dt.datetime.now()
+                try:
+                    my_zip_file = my_file.open(file_path, 'r')
+                except Exception as e:
+                    print(f"[WARNING] Unable to open file <{full_code_file_path}> (process {process_num})")
+                    print(e)
+                    continue
+                times["zip_time"] += (dt.datetime.now() - z_time).microseconds
+
+                if my_zip_file is None:
+                    print(f"[WARNING] Opened file is None <{full_code_file_path}> (process {process_num})")
+                    continue
+
+                file_string = ""
+                f_time = dt.datetime.now()
+                try:
+                    file_string = my_zip_file.read().decode("utf-8")
+                except:
+                    print(f"[WARNING] File {file_path} can't be read")
+                times["file_time"] += (dt.datetime.now() - f_time).microseconds
+
+                file_times = process_file_contents(file_string, proj_id, file_id, zip_file, file_path, file_bytes, out_files)
+                for time_name, time in file_times.items():
+                    times[time_name] += time
+    except zipfile.BadZipFile as e:
+        print(f"[ERROR] Incorrect zip file {zip_file}")
+
+    print(f"[INFO] Successfully ran process_zip_ball {zip_file}")
+    return times
+
+
 def process_one_project(process_num, proj_id, proj_path, base_file_id, out_files):
     global inner_config
 
@@ -221,7 +275,7 @@ def process_one_project(process_num, proj_id, proj_path, base_file_id, out_files
     if not os.path.isfile(proj_path):
         print(f"[WARNING] Unable to open {project_info}")
         return
-    times = process_zip_ball(process_num, proj_id, proj_path, base_file_id, language_config, process_file_contents, out_files, inner_config)
+    times = process_zip_ball(process_num, proj_id, proj_path, base_file_id, language_config, out_files, inner_config)
     file_bookkeeping_proj.write(f'{proj_id},"{proj_path}"\n')
     elapsed_time = dt.datetime.now() - start_time
 
