@@ -7,7 +7,7 @@ global found_parent
 re_string = re.escape("\"") + '.*?' + re.escape("\"")
 
 
-def getFunctions(filestring, file_path, comment_inline_pattern):
+def get_functions(filestring, file_path, comment_inline_pattern):
     method_string = []
     method_pos = []
     method_name = []
